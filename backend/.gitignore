@@ -1,0 +1,24 @@
+# Maven Build Output
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Gradle Build Output
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Compiled Java Files
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+
+# Local Spring Boot Configs
+application-local.yml
+application-local.properties
