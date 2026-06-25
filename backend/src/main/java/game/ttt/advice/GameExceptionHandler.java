@@ -29,7 +29,7 @@ public class GameExceptionHandler {
     }
 
     @ExceptionHandler(InvalidPlayerMoveException.class)
-    public ResponseEntity<String> handleInvalidPlayerMove(InvalidPlayerTurnException ex) {
+    public ResponseEntity<String> handleInvalidPlayerMove(InvalidPlayerMoveException ex) {
         log.error(ex.getMessage());
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
