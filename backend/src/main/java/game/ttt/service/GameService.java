@@ -1,6 +1,7 @@
 package game.ttt.service;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -84,18 +85,24 @@ public class GameService {
     }
 
     public void checkGameId(Long gameId) {
-        if (!gameRepo.existsById(gameId)) {
+        if (!gameRooms.containsKey(gameId)) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
         }
         log.debug("Game {} exists", gameId);
     }
 
     public Long createGameId() {
-        return gameRepo.save(new BoardInfo()).getId();
+        Long gameId = gameRepo.save(new BoardInfo()).getId();
+        gameRooms.put(gameId, new GameRoom());
+        return gameId;
     }
 
     public String showGame(Long gameId) {
         return gameRepo.findById(gameId).get().getBoard();
+    }
+
+    public Integer getVacantPlayerId(Long gameId) {
+        return gameRooms.get(gameId).getVacantPlayerId();
     }
 
 }

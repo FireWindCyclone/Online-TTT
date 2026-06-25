@@ -1,5 +1,6 @@
 package game.ttt.model;
 
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.UpdatePosDto;
+import game.ttt.exception.MissingPlayerException;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
@@ -98,6 +100,17 @@ public class GameRoom {
 
     public boolean isPlayerTurn(Player player) {
         return playerTurn == player;
+    }
+
+    public Integer getVacantPlayerId() {
+        if (player0 == null) {
+            return 0;
+        }
+        if (player1 == null) {
+            return 1;
+        }
+
+        throw new MissingPlayerException("Game room is full");
     }
 
 }

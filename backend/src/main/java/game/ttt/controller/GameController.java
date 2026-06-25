@@ -25,7 +25,7 @@ public class GameController {
         this.gameService = gameService;
     }
 
-    @GetMapping("/games/{gameId}")
+    @GetMapping("/games/{gameId}/show")
     public ResponseEntity<String> showGame(@PathVariable Long gameId) {
         gameService.checkGameId(gameId);
         String board = gameService.showGame(gameId);
@@ -37,6 +37,14 @@ public class GameController {
         Long gameId = gameService.createGameId();
         log.info("Player {} created game {}", Player.PLAYER_0, gameId);
         return ResponseEntity.ok(gameId);
+    }
+
+    @GetMapping("/games/{gameId}/player")
+    public ResponseEntity<Integer> getPlayerId(@PathVariable Long gameId) {
+        gameService.checkGameId(gameId);
+        Integer playerId = gameService.getVacantPlayerId(gameId);
+        log.info("Player ID {} requested for game {}", playerId, gameId);
+        return ResponseEntity.ok(playerId);
     }
 
     @PostMapping("/games/{gameId}/move/{playerId}")
@@ -54,7 +62,7 @@ public class GameController {
         gameService.checkGameId(gameId);
         Player player = Player.fromId(playerId);
         SseEmitter sse = gameService.createEmitter(gameId, player);
-        log.info("Player {} joined game {}", player, gameId);
+        log.info("Player {} connected to game {}", player, gameId);
         return ResponseEntity.ok(sse);
     }
 
