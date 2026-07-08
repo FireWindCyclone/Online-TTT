@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.UpdatePosDto;
-import game.ttt.exception.MissingPlayerException;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
@@ -102,15 +101,12 @@ public class GameRoom {
         return playerTurn == player;
     }
 
-    public Integer getVacantPlayerId() {
-        if (player0 == null) {
-            return 0;
-        }
-        if (player1 == null) {
-            return 1;
-        }
+    public boolean canPlayerJoin(Player player) {
+        return switch (player) {
+            case PLAYER_0 -> player0 == null;
+            case PLAYER_1 -> player0 != null && player1 == null;
+        };
 
-        throw new MissingPlayerException("Game room is full");
     }
 
 }

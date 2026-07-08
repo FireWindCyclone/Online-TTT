@@ -1,7 +1,6 @@
 package game.ttt.service;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -11,12 +10,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.UpdatePosDto;
 import game.ttt.entity.BoardInfo;
-import game.ttt.exception.MissingPlayerException;
+import game.ttt.exception.PlayerException;
 import game.ttt.model.GameRoom;
 import game.ttt.model.Player;
 import game.ttt.exception.GameNotFoundException;
-import game.ttt.exception.InvalidPlayerMoveException;
-import game.ttt.exception.InvalidPlayerTurnException;
 import game.ttt.repository.GameRepository;
 
 @Service
@@ -33,21 +30,21 @@ public class GameService {
     public void makeMove(Long gameId, Player player, UpdatePosDto pos) {
         GameRoom room = gameRooms.get(gameId);
         if (room == null || room.getEmitter(Player.PLAYER_0) == null || room.getEmitter(Player.PLAYER_1) == null) {
-            throw new MissingPlayerException("Not enough players to play the game " + gameId);
+            throw new PlayerException("Not enough players to play the game " + gameId);
         }
 
         log.debug("Both emitters for game {} are present", gameId);
 
         synchronized (room) {
             if (!room.isPlayerTurn(player)) {
-                throw new InvalidPlayerTurnException("Not the player " + player + " turn yet");
+                throw new PlayerException("Not the player " + player + " turn yet");
             }
             log.debug("Correct player {} making move for game {}", player, gameId);
 
             BoardInfo boardInfo = gameRepo.findById(gameId).get();
             String board = boardInfo.getBoard();
             if (board.charAt(pos.index()) != ' ') {
-                throw new InvalidPlayerMoveException(
+                throw new PlayerException(
                         "Cannot mark position " + pos + " because its already filled");
             }
             log.debug("Valid move for game {} and pos {}", gameId, pos);
@@ -101,8 +98,10 @@ public class GameService {
         return gameRepo.findById(gameId).get().getBoard();
     }
 
-    public Integer getVacantPlayerId(Long gameId) {
-        return gameRooms.get(gameId).getVacantPlayerId();
+    public void checkPlayerVacant(Long gameId, Player player) {
+        if (!gameRooms.get(gameId).canPlayerJoin(player)) {
+            throw new PlayerException("Player " + player + " can't join Game " + gameId);
+        }
     }
 
 }

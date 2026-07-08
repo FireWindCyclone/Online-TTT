@@ -9,10 +9,12 @@ import game.ttt.service.GameService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -36,31 +38,24 @@ public class GameController {
     public ResponseEntity<Long> createGame() {
         Long gameId = gameService.createGameId();
         log.info("Player {} created game {}", Player.PLAYER_0, gameId);
-        return ResponseEntity.ok(gameId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(gameId);
     }
 
-    @GetMapping("/games/{gameId}/player")
-    public ResponseEntity<Integer> getPlayerId(@PathVariable Long gameId) {
-        gameService.checkGameId(gameId);
-        Integer playerId = gameService.getVacantPlayerId(gameId);
-        log.info("Player ID {} requested for game {}", playerId, gameId);
-        return ResponseEntity.ok(playerId);
-    }
-
-    @PostMapping("/games/{gameId}/move/{playerId}")
+    @PutMapping("/games/{gameId}/move/{playerId}")
     public ResponseEntity<Void> playerMove(@PathVariable Long gameId, @PathVariable Integer playerId,
             @RequestBody UpdatePosDto pos) {
 
         Player player = Player.fromId(playerId);
         gameService.makeMove(gameId, player, pos);
         log.info("Player {} made move {} in game {}", player, pos, gameId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/games/{gameId}/stream/{playerId}")
-    public ResponseEntity<SseEmitter> createStream(@PathVariable Long gameId, @PathVariable Integer playerId) {
+    @GetMapping("/games/{gameId}/join/{playerId}")
+    public ResponseEntity<SseEmitter> joinGame(@PathVariable Long gameId, @PathVariable Integer playerId) {
         gameService.checkGameId(gameId);
         Player player = Player.fromId(playerId);
+        gameService.checkPlayerVacant(gameId, player);
         SseEmitter sse = gameService.createEmitter(gameId, player);
         log.info("Player {} connected to game {}", player, gameId);
         return ResponseEntity.ok(sse);
