@@ -1,6 +1,5 @@
 package game.ttt.model;
 
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
@@ -84,7 +83,7 @@ public class GameRoom {
         SseEmitter emitter = switchPlayerTurn(player);
 
         if (emitter == null) {
-            log.warn("Player {} is disconnected. Skipping sync", playerTurn);
+            log.warn("Player {} has disconnected. Skipping sync", playerTurn);
             return;
         }
 
@@ -106,7 +105,30 @@ public class GameRoom {
             case PLAYER_0 -> player0 == null;
             case PLAYER_1 -> player0 != null && player1 == null;
         };
+    }
 
+    public void pingPlayers() {
+        pingPlayer(player0, player1);
+        pingPlayer(player1, player0);
+    }
+
+    private void pingPlayer(SseEmitter player, SseEmitter PlayerOther) {
+        if (player != null) {
+            try {
+                if (PlayerOther == null) {
+                    player.send(SseEmitter.event().name("player-disconnected"));
+                    log.debug("The other player has disconnected");
+                } else {
+                    player.send(SseEmitter.event().comment("ping"));
+                }
+            } catch (Exception ex) {
+                player.completeWithError(ex);
+            }
+        }
+    }
+
+    public boolean isEmpty() {
+        return player0 == null && player1 == null;
     }
 
 }

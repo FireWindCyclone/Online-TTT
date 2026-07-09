@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -102,6 +103,18 @@ public class GameService {
         if (!gameRooms.get(gameId).canPlayerJoin(player)) {
             throw new PlayerException("Player " + player + " can't join Game " + gameId);
         }
+    }
+
+    @Scheduled(fixedRate = 15000)
+    private void checkClientPresent() {
+        gameRooms.entrySet().removeIf(entry -> {
+            if (entry.getValue().isEmpty()) {
+                log.debug("Removing Game {}", entry.getKey());
+                return true;
+            }
+            return false;
+        });
+        gameRooms.forEach((_, room) -> room.pingPlayers());
     }
 
 }

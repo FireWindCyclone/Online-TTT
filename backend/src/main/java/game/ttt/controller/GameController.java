@@ -58,7 +58,8 @@ public class GameController {
         gameService.checkPlayerVacant(gameId, player);
         SseEmitter sse = gameService.createEmitter(gameId, player);
         log.info("Player {} connected to game {}", player, gameId);
-        return ResponseEntity.ok(sse);
+
+        return ResponseEntity.ok().header("Cache-Control", "no-cache").header("X-Accel-Buffering", "no").body(sse);
     }
 
 }
