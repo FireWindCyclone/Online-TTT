@@ -12,6 +12,8 @@ public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
     private volatile SseEmitter player0;
     private volatile SseEmitter player1;
+    private int score0;
+    private int score1;
     private Player playerTurn;
 
     public GameRoom() {
@@ -66,22 +68,9 @@ public class GameRoom {
         return sse;
     }
 
-    private SseEmitter switchPlayerTurn(Player player) {
-        return switch (player) {
-            case PLAYER_0 -> {
-                playerTurn = Player.PLAYER_1;
-                yield player1;
-            }
-            case PLAYER_1 -> {
-                playerTurn = Player.PLAYER_0;
-                yield player0;
-            }
-        };
-
-    }
-
     public void syncGame(Player player, UpdatePosDto pos) {
-        SseEmitter emitter = switchPlayerTurn(player);
+        playerTurn = player.getOtherPlayer();
+        SseEmitter emitter = getEmitter(playerTurn);
 
         if (emitter == null) {
             log.warn("Player {} has disconnected. Skipping sync", playerTurn);
@@ -114,10 +103,10 @@ public class GameRoom {
         pingPlayer(player1, player0);
     }
 
-    private void pingPlayer(SseEmitter player, SseEmitter PlayerOther) {
+    private void pingPlayer(SseEmitter player, SseEmitter playerOther) {
         if (player != null) {
             try {
-                if (PlayerOther == null) {
+                if (playerOther == null) {
                     player.send(SseEmitter.event().name("player-disconnected"));
                     log.debug("The other player has disconnected");
                 } else {
@@ -134,4 +123,38 @@ public class GameRoom {
         return player0 == null && player1 == null;
     }
 
+    public int getPlayerScore(Player player) {
+        return switch (player) {
+            case PLAYER_0 -> score0;
+            case PLAYER_1 -> score1;
+        };
+    }
+
+    public void incPlayerScore(Player player, int inc) {
+        switch (player) {
+            case PLAYER_0 -> score0 += inc;
+            case PLAYER_1 -> score1 += inc;
+        }
+    }
+
+    public void playerWon(Player player) {
+        String winEvent = "won-" + player.getSymbol();
+        sendWinner(player, winEvent);
+        sendWinner(player.getOtherPlayer(), winEvent);
+    }
+
+    private void sendWinner(Player player, String winEvent) {
+        SseEmitter emitter = getEmitter(player);
+        if (emitter != null) {
+            log.debug("Sending winner to player {}", player);
+            try {
+                emitter.send(SseEmitter.event().name(winEvent));
+                emitter.complete();
+            } catch (Exception ex) {
+                log.error("Failed to send winner to player {}", player);
+                emitter.completeWithError(ex);
+                return;
+            }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package game.ttt.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +24,7 @@ public class GameService {
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
     private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
+    private static final List<Integer> WIN_SCORES = List.of(7, 56, 448, 73, 146, 292, 273, 84);
 
     public GameService(GameRepository gameRepo) {
         this.gameRepo = gameRepo;
@@ -30,7 +32,7 @@ public class GameService {
 
     public void makeMove(Long gameId, Player player, UpdatePosDto pos) {
         GameRoom room = gameRooms.get(gameId);
-        if (room == null || room.getEmitter(Player.PLAYER_0) == null || room.getEmitter(Player.PLAYER_1) == null) {
+        if (room == null || room.getEmitter(player) == null || room.getEmitter(player.getOtherPlayer()) == null) {
             throw new PlayerException("Not enough players to play the game " + gameId);
         }
 
@@ -50,12 +52,19 @@ public class GameService {
             }
             log.debug("Valid move for game {} and pos {}", gameId, pos);
 
+            room.incPlayerScore(player, Math.powExact(2, pos.index()));
             char[] boardArr = board.toCharArray();
-            boardArr[pos.index()] = player == Player.PLAYER_0 ? 'X' : 'O';
+            boardArr[pos.index()] = player.getSymbol();
             boardInfo.setBoard(new String(boardArr));
             gameRepo.save(boardInfo);
 
             room.syncGame(player, pos);
+
+            if (WIN_SCORES.stream().anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
+                log.info("Player {} won in game {}", player, gameId);
+                room.playerWon(player);
+            }
+
         }
     }
 
@@ -107,13 +116,13 @@ public class GameService {
 
     @Scheduled(fixedRate = 15000)
     private void checkClientPresent() {
-        gameRooms.entrySet().removeIf(entry -> {
-            if (entry.getValue().isEmpty()) {
-                log.debug("Removing Game {}", entry.getKey());
-                return true;
-            }
-            return false;
-        });
+        // gameRooms.entrySet().removeIf(entry -> {
+        // if (entry.getValue().isEmpty()) {
+        // log.debug("Removing Game {}", entry.getKey());
+        // return true;
+        // }
+        // return false;
+        // });
         gameRooms.forEach((_, room) -> room.pingPlayers());
     }
 
