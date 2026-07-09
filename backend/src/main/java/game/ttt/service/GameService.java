@@ -75,7 +75,7 @@ public class GameService {
                 newSse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
             } catch (Exception ex) {
                 newSse.completeWithError(ex);
-                throw new RuntimeException("Failed to send game state to player " + player, ex);
+                throw new RuntimeException("Failed to send game state to player " + player);
             }
 
             return newSse;

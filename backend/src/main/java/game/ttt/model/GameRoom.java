@@ -46,7 +46,8 @@ public class GameRoom {
             log.info("Completed connection for player {}", player);
             removeEmitter(player, sse);
         });
-        sse.onError(_ -> {
+        sse.onError(ex -> {
+            log.error(ex.getMessage());
             log.error("Errored connection for player {}", player);
             removeEmitter(player, sse);
         });
@@ -90,8 +91,9 @@ public class GameRoom {
         try {
             emitter.send(SseEmitter.event().name("move").data(pos));
         } catch (Exception ex) {
+            log.error("Player {} sync failed. Removing player {}", playerTurn, playerTurn);
             emitter.completeWithError(ex);
-            throw new RuntimeException("Failed Sync to player " + player, ex);
+            return;
         }
         log.debug("Player {} synced", playerTurn);
     }
@@ -122,6 +124,7 @@ public class GameRoom {
                     player.send(SseEmitter.event().comment("ping"));
                 }
             } catch (Exception ex) {
+                log.error("Failed to ping player. Removing player");
                 player.completeWithError(ex);
             }
         }
