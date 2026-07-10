@@ -1,6 +1,8 @@
 package game.ttt.model;
 
+import java.time.Instant;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +12,9 @@ import game.ttt.dto.UpdatePosDto;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
-    private volatile SseEmitter player0;
-    private volatile SseEmitter player1;
+    private AtomicReference<SseEmitter> player0 = new AtomicReference<>();
+    private AtomicReference<SseEmitter> player1 = new AtomicReference<>();
+    private Instant updatedAt = Instant.now();
     private int score0;
     private int score1;
     private Player playerTurn;
@@ -22,26 +25,45 @@ public class GameRoom {
 
     public SseEmitter getEmitter(Player player) {
         return switch (player) {
-            case PLAYER_0 -> player0;
-            case PLAYER_1 -> player1;
+            case PLAYER_0 -> player0.get();
+            case PLAYER_1 -> player1.get();
         };
     }
 
     private void removeEmitter(Player player, SseEmitter oldSse) {
+        log.debug("Removing player {} emitter", player);
         switch (player) {
-            case PLAYER_0 -> {
-                if (player0 == oldSse)
-                    player0 = null;
-            }
-            case PLAYER_1 -> {
-                if (player1 == oldSse)
-                    player1 = null;
+            case PLAYER_0 -> player0.compareAndSet(oldSse, null);
+            case PLAYER_1 -> player1.compareAndSet(oldSse, null);
+        }
+
+        if (getEmitter(player) == null) {
+            log.debug("Player {} disconnected", player);
+            sendDisconnect(player.getOtherPlayer());
+        }
+
+    }
+
+    private void sendDisconnect(Player player) {
+        SseEmitter emitter = getEmitter(player);
+        if (emitter != null) {
+            try {
+                emitter.send(SseEmitter.event().name("player-disconnected"));
+            } catch (Exception ex) {
+                log.error("Failed to send disconnect to player {}", player);
+                emitter.completeWithError(ex);
             }
         }
-        log.debug("Player {} emitter removed", player);
     }
 
     public SseEmitter addEmitter(Player player) {
+
+        SseEmitter oldSse = getEmitter(player);
+        if (oldSse != null) {
+            log.debug("Player {} reconnecting. Closing old connection", player);
+            oldSse.complete();
+        }
+
         SseEmitter sse = new SseEmitter(300000L);
 
         sse.onCompletion(() -> {
@@ -59,8 +81,8 @@ public class GameRoom {
         });
 
         switch (player) {
-            case PLAYER_0 -> player0 = sse;
-            case PLAYER_1 -> player1 = sse;
+            case PLAYER_0 -> player0.set(sse);
+            case PLAYER_1 -> player1.set(sse);
         }
 
         log.debug("Player {} emitter added", player);
@@ -69,7 +91,7 @@ public class GameRoom {
     }
 
     public void syncGame(Player player, UpdatePosDto pos) {
-        playerTurn = player.getOtherPlayer();
+        playerTurn = player;
         SseEmitter emitter = getEmitter(playerTurn);
 
         if (emitter == null) {
@@ -93,34 +115,31 @@ public class GameRoom {
 
     public boolean canPlayerJoin(Player player) {
         return switch (player) {
-            case PLAYER_0 -> player0 == null;
-            case PLAYER_1 -> player0 != null && player1 == null;
+            case PLAYER_0 -> player0.get() == null;
+            case PLAYER_1 -> player0.get() != null && player1.get() == null;
         };
     }
 
     public void pingPlayers() {
-        pingPlayer(player0, player1);
-        pingPlayer(player1, player0);
+        pingPlayer(Player.PLAYER_0);
+        pingPlayer(Player.PLAYER_1);
     }
 
-    private void pingPlayer(SseEmitter player, SseEmitter playerOther) {
-        if (player != null) {
+    private void pingPlayer(Player player) {
+        SseEmitter emitter = getEmitter(player);
+        if (emitter != null) {
             try {
-                if (playerOther == null) {
-                    player.send(SseEmitter.event().name("player-disconnected"));
-                    log.debug("The other player has disconnected");
-                } else {
-                    player.send(SseEmitter.event().comment("ping"));
-                }
+                emitter.send(SseEmitter.event().comment("ping"));
             } catch (Exception ex) {
-                log.error("Failed to ping player. Removing player");
-                player.completeWithError(ex);
+                log.error("Failed to ping player");
+                emitter.completeWithError(ex);
             }
+            updatedAt = Instant.now();
         }
     }
 
-    public boolean isEmpty() {
-        return player0 == null && player1 == null;
+    public Instant getLastRoomUpdate() {
+        return updatedAt;
     }
 
     public int getPlayerScore(Player player) {

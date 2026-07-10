@@ -58,7 +58,7 @@ public class GameService {
             boardInfo.setBoard(new String(boardArr));
             gameRepo.save(boardInfo);
 
-            room.syncGame(player, pos);
+            room.syncGame(player.getOtherPlayer(), pos);
 
             if (WIN_SCORES.stream().anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
                 log.info("Player {} won in game {}", player, gameId);
@@ -71,23 +71,15 @@ public class GameService {
     public SseEmitter createEmitter(Long gameId, Player player) {
         GameRoom room = gameRooms.computeIfAbsent(gameId, _ -> new GameRoom());
         synchronized (room) {
-            SseEmitter oldSse = room.getEmitter(player);
-
-            if (oldSse != null) {
-                log.debug("Player {} reconnecting in game {}", player, gameId);
-                oldSse.complete();
-            }
-
-            SseEmitter newSse = room.addEmitter(player);
-
+            SseEmitter sse = room.addEmitter(player);
             try {
-                newSse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
+                sse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
             } catch (Exception ex) {
-                newSse.completeWithError(ex);
-                throw new RuntimeException("Failed to send game state to player " + player);
+                sse.completeWithError(ex);
+                throw new RuntimeException("Failed to send game " + gameId + " state to player " + player);
             }
 
-            return newSse;
+            return sse;
         }
     }
 
