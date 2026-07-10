@@ -1,5 +1,7 @@
 package game.ttt.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,21 +66,19 @@ public class GameService {
                 log.info("Player {} won in game {}", player, gameId);
                 room.playerWon(player);
             }
-
         }
     }
 
     public SseEmitter createEmitter(Long gameId, Player player) {
         GameRoom room = gameRooms.computeIfAbsent(gameId, _ -> new GameRoom());
         synchronized (room) {
-            SseEmitter sse = room.addEmitter(player);
+            SseEmitter sse = room.connectPlayer(player);
             try {
                 sse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
             } catch (Exception ex) {
                 sse.completeWithError(ex);
                 throw new RuntimeException("Failed to send game " + gameId + " state to player " + player);
             }
-
             return sse;
         }
     }
@@ -108,13 +108,14 @@ public class GameService {
 
     @Scheduled(fixedRate = 15000)
     private void checkClientPresent() {
-        // gameRooms.entrySet().removeIf(entry -> {
-        // if (entry.getValue().isEmpty()) {
-        // log.debug("Removing Game {}", entry.getKey());
-        // return true;
-        // }
-        // return false;
-        // });
+        gameRooms.entrySet().removeIf(entry -> {
+            if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 30) {
+                log.debug("Removing Game {}", entry.getKey());
+                gameRepo.deleteById(entry.getKey());
+                return true;
+            }
+            return false;
+        });
         gameRooms.forEach((_, room) -> room.pingPlayers());
     }
 

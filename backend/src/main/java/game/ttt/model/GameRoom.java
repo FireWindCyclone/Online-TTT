@@ -30,7 +30,7 @@ public class GameRoom {
         };
     }
 
-    private void removeEmitter(Player player, SseEmitter oldSse) {
+    private void disconnectPlayer(Player player, SseEmitter oldSse) {
         log.debug("Removing player {} emitter", player);
         switch (player) {
             case PLAYER_0 -> player0.compareAndSet(oldSse, null);
@@ -56,7 +56,7 @@ public class GameRoom {
         }
     }
 
-    public SseEmitter addEmitter(Player player) {
+    public SseEmitter connectPlayer(Player player) {
 
         SseEmitter oldSse = getEmitter(player);
         if (oldSse != null) {
@@ -68,16 +68,16 @@ public class GameRoom {
 
         sse.onCompletion(() -> {
             log.info("Completed connection for player {}", player);
-            removeEmitter(player, sse);
+            disconnectPlayer(player, sse);
         });
         sse.onError(ex -> {
             log.error(ex.getMessage());
             log.error("Errored connection for player {}", player);
-            removeEmitter(player, sse);
+            disconnectPlayer(player, sse);
         });
         sse.onTimeout(() -> {
             log.warn("Timed out connection for player {}", player);
-            removeEmitter(player, sse);
+            disconnectPlayer(player, sse);
         });
 
         switch (player) {
@@ -131,7 +131,7 @@ public class GameRoom {
             try {
                 emitter.send(SseEmitter.event().comment("ping"));
             } catch (Exception ex) {
-                log.error("Failed to ping player");
+                log.error("Failed to ping player {}", player);
                 emitter.completeWithError(ex);
             }
             updatedAt = Instant.now();
