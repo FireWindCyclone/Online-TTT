@@ -69,15 +69,14 @@ public class GameService {
         }
     }
 
-    public SseEmitter createEmitter(Long gameId, Player player) {
+    public SseEmitter createConnection(Long gameId, Player player) {
         GameRoom room = gameRooms.computeIfAbsent(gameId, _ -> new GameRoom());
         synchronized (room) {
             SseEmitter sse = room.connectPlayer(player);
             try {
                 sse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
             } catch (Exception ex) {
-                sse.completeWithError(ex);
-                throw new RuntimeException("Failed to send game " + gameId + " state to player " + player);
+                throw new RuntimeException("Failed to send game " + gameId + " state to player " + player, ex);
             }
             return sse;
         }

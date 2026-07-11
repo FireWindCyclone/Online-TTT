@@ -31,14 +31,13 @@ public class GameRoom {
     }
 
     private void disconnectPlayer(Player player, SseEmitter oldSse) {
-        log.debug("Removing player {} emitter", player);
-        switch (player) {
+        boolean removed = switch (player) {
             case PLAYER_0 -> player0.compareAndSet(oldSse, null);
             case PLAYER_1 -> player1.compareAndSet(oldSse, null);
-        }
+        };
 
-        if (getEmitter(player) == null) {
-            log.debug("Player {} disconnected", player);
+        if (removed) {
+            log.debug("Player {} disconnected. Notifying {}", player, player.getOtherPlayer());
             sendDisconnect(player.getOtherPlayer());
         }
 
@@ -50,14 +49,12 @@ public class GameRoom {
             try {
                 emitter.send(SseEmitter.event().name("player-disconnected"));
             } catch (Exception ex) {
-                log.error("Failed to send disconnect to player {}", player);
-                emitter.completeWithError(ex);
+                log.debug("Failed to notify disconnect to player {}: {}", player, ex.getMessage());
             }
         }
     }
 
     public SseEmitter connectPlayer(Player player) {
-
         SseEmitter oldSse = getEmitter(player);
         if (oldSse != null) {
             log.debug("Player {} reconnecting. Closing old connection", player);
@@ -67,12 +64,11 @@ public class GameRoom {
         SseEmitter sse = new SseEmitter(300000L);
 
         sse.onCompletion(() -> {
-            log.info("Completed connection for player {}", player);
+            log.debug("Completed connection for player {}", player);
             disconnectPlayer(player, sse);
         });
         sse.onError(ex -> {
-            log.error(ex.getMessage());
-            log.error("Errored connection for player {}", player);
+            log.warn("Errored connection for player {}: {}", player, ex.getMessage());
             disconnectPlayer(player, sse);
         });
         sse.onTimeout(() -> {
@@ -85,28 +81,26 @@ public class GameRoom {
             case PLAYER_1 -> player1.set(sse);
         }
 
-        log.debug("Player {} emitter added", player);
+        log.debug("Player {} connected. Syncing", player);
 
         return sse;
     }
 
     public void syncGame(Player player, UpdatePosDto pos) {
         playerTurn = player;
-        SseEmitter emitter = getEmitter(playerTurn);
+        SseEmitter emitter = getEmitter(player);
 
         if (emitter == null) {
-            log.warn("Player {} has disconnected. Skipping sync", playerTurn);
+            log.debug("Player {} has disconnected. Skipping sync", player);
             return;
         }
 
+        log.debug("Player {} syncing", player);
         try {
             emitter.send(SseEmitter.event().name("move").data(pos));
         } catch (Exception ex) {
-            log.error("Player {} sync failed. Removing player {}", playerTurn, playerTurn);
-            emitter.completeWithError(ex);
-            return;
+            log.debug("Player {} sync failed: {}", player, ex.getMessage());
         }
-        log.debug("Player {} synced", playerTurn);
     }
 
     public boolean isPlayerTurn(Player player) {
@@ -131,8 +125,7 @@ public class GameRoom {
             try {
                 emitter.send(SseEmitter.event().comment("ping"));
             } catch (Exception ex) {
-                log.error("Failed to ping player {}", player);
-                emitter.completeWithError(ex);
+                log.debug("Failed to ping player {}: {}", player, ex.getMessage());
             }
             updatedAt = Instant.now();
         }
@@ -170,9 +163,7 @@ public class GameRoom {
                 emitter.send(SseEmitter.event().name(winEvent));
                 emitter.complete();
             } catch (Exception ex) {
-                log.error("Failed to send winner to player {}", player);
-                emitter.completeWithError(ex);
-                return;
+                log.debug("Failed to send winner to player {}: {}", player, ex.getMessage());
             }
         }
     }
