@@ -55,7 +55,6 @@ public class GameController {
     public ResponseEntity<SseEmitter> joinGame(@PathVariable Long gameId, @PathVariable Integer playerId) {
         gameService.checkGameId(gameId);
         Player player = Player.fromId(playerId);
-        gameService.checkPlayerVacant(gameId, player);
         SseEmitter sse = gameService.createConnection(gameId, player);
         log.info("Player {} joined game {}", player, gameId);
 

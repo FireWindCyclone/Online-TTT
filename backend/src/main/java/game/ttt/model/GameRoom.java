@@ -81,8 +81,6 @@ public class GameRoom {
             case PLAYER_1 -> player1.set(sse);
         }
 
-        log.debug("Player {} connected. Syncing", player);
-
         return sse;
     }
 
@@ -95,7 +93,7 @@ public class GameRoom {
             return;
         }
 
-        log.debug("Player {} syncing", player);
+        log.debug("Player {} syncing pos {}", player, pos);
         try {
             emitter.send(SseEmitter.event().name("move").data(pos));
         } catch (Exception ex) {
@@ -115,6 +113,7 @@ public class GameRoom {
     }
 
     public void pingPlayers() {
+        log.debug("Pinging players");
         pingPlayer(Player.PLAYER_0);
         pingPlayer(Player.PLAYER_1);
     }

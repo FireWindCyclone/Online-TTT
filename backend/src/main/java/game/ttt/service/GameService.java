@@ -54,12 +54,11 @@ public class GameService {
             }
             log.debug("Valid move for game {} and pos {}", gameId, pos);
 
-            room.incPlayerScore(player, Math.powExact(2, pos.index()));
             char[] boardArr = board.toCharArray();
             boardArr[pos.index()] = player.getSymbol();
             boardInfo.setBoard(new String(boardArr));
             gameRepo.save(boardInfo);
-
+            room.incPlayerScore(player, 1 << pos.index());
             room.syncGame(player.getOtherPlayer(), pos);
 
             if (WIN_SCORES.stream().anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
@@ -72,7 +71,13 @@ public class GameService {
     public SseEmitter createConnection(Long gameId, Player player) {
         GameRoom room = gameRooms.computeIfAbsent(gameId, _ -> new GameRoom());
         synchronized (room) {
+            if (!room.canPlayerJoin(player)) {
+                throw new PlayerException("Player " + player + " can't join Game " + gameId);
+            }
             SseEmitter sse = room.connectPlayer(player);
+
+            log.debug("Player {} connected to game {}. Syncing initial game state", player, gameId);
+
             try {
                 sse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
             } catch (Exception ex) {
@@ -97,12 +102,6 @@ public class GameService {
 
     public String showGame(Long gameId) {
         return gameRepo.findById(gameId).get().getBoard();
-    }
-
-    public void checkPlayerVacant(Long gameId, Player player) {
-        if (!gameRooms.get(gameId).canPlayerJoin(player)) {
-            throw new PlayerException("Player " + player + " can't join Game " + gameId);
-        }
     }
 
     @Scheduled(fixedRate = 15000)
