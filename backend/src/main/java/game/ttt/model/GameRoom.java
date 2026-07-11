@@ -2,7 +2,6 @@ package game.ttt.model;
 
 import java.time.Instant;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +11,8 @@ import game.ttt.dto.UpdatePosDto;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
-    private AtomicReference<SseEmitter> player0 = new AtomicReference<>();
-    private AtomicReference<SseEmitter> player1 = new AtomicReference<>();
+    private volatile SseEmitter player0;
+    private volatile SseEmitter player1;
     private Instant updatedAt = Instant.now();
     private int score0;
     private int score1;
@@ -25,22 +24,18 @@ public class GameRoom {
 
     public SseEmitter getEmitter(Player player) {
         return switch (player) {
-            case PLAYER_0 -> player0.get();
-            case PLAYER_1 -> player1.get();
+            case PLAYER_0 -> player0;
+            case PLAYER_1 -> player1;
         };
     }
 
-    private void disconnectPlayer(Player player, SseEmitter oldSse) {
-        boolean removed = switch (player) {
-            case PLAYER_0 -> player0.compareAndSet(oldSse, null);
-            case PLAYER_1 -> player1.compareAndSet(oldSse, null);
-        };
-
-        if (removed) {
-            log.debug("Player {} disconnected. Notifying {}", player, player.getOtherPlayer());
-            sendDisconnect(player.getOtherPlayer());
+    private void disconnectPlayer(Player player) {
+        switch (player) {
+            case PLAYER_0 -> player0 = null;
+            case PLAYER_1 -> player1 = null;
         }
-
+        log.debug("Player {} disconnected. Notifying {}", player, player.getOtherPlayer());
+        sendDisconnect(player.getOtherPlayer());
     }
 
     private void sendDisconnect(Player player) {
@@ -55,30 +50,22 @@ public class GameRoom {
     }
 
     public SseEmitter connectPlayer(Player player) {
-        SseEmitter oldSse = getEmitter(player);
-        if (oldSse != null) {
-            log.debug("Player {} reconnecting. Closing old connection", player);
-            oldSse.complete();
-        }
-
         SseEmitter sse = new SseEmitter(300000L);
 
         sse.onCompletion(() -> {
             log.debug("Completed connection for player {}", player);
-            disconnectPlayer(player, sse);
+            disconnectPlayer(player);
         });
         sse.onError(ex -> {
             log.warn("Errored connection for player {}: {}", player, ex.getMessage());
-            disconnectPlayer(player, sse);
         });
         sse.onTimeout(() -> {
             log.warn("Timed out connection for player {}", player);
-            disconnectPlayer(player, sse);
         });
 
         switch (player) {
-            case PLAYER_0 -> player0.set(sse);
-            case PLAYER_1 -> player1.set(sse);
+            case PLAYER_0 -> player0 = sse;
+            case PLAYER_1 -> player1 = sse;
         }
 
         return sse;
@@ -89,7 +76,7 @@ public class GameRoom {
         SseEmitter emitter = getEmitter(player);
 
         if (emitter == null) {
-            log.debug("Player {} has disconnected. Skipping sync", player);
+            log.debug("Player {} has disconnected. Can't sync to player {}", player, player);
             return;
         }
 
@@ -107,8 +94,8 @@ public class GameRoom {
 
     public boolean canPlayerJoin(Player player) {
         return switch (player) {
-            case PLAYER_0 -> player0.get() == null;
-            case PLAYER_1 -> player0.get() != null && player1.get() == null;
+            case PLAYER_0 -> player0 == null;
+            case PLAYER_1 -> player0 != null && player1 == null;
         };
     }
 
