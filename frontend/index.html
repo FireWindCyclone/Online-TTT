@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Online Tic Tac Toe</title>
+		<script type="module" src="/src/main.ts"></script>
+	</head>
+	<body>
+		<header class="game-header">
+			<h1>Tic-Tac-Toe</h1>
+			<p id="game-status">Create or join a game to play with friends online</p>
+			<div class="header-buttons">
+				<button class="create-game" type="button">Create</button>
+				<button class="join-game" type="button">Join</button>
+			</div>
+		</header>
+
+		<main>
+			<ul class="player-type">
+				<li>You (X)</li>
+				<li>Opponent (O)</li>
+			</ul>
+
+			<div class="board">
+				<button class="cell" data-index="0" type="button"></button>
+				<button class="cell" data-index="1" type="button"></button>
+				<button class="cell" data-index="2" type="button"></button>
+				<button class="cell" data-index="3" type="button"></button>
+				<button class="cell" data-index="4" type="button"></button>
+				<button class="cell" data-index="5" type="button"></button>
+				<button class="cell" data-index="6" type="button"></button>
+				<button class="cell" data-index="7" type="button"></button>
+				<button class="cell" data-index="8" type="button"></button>
+			</div>
+
+			<button class="reset-game" type="button">Reset</button>
+		</main>
+	</body>
+</html>

@@ -1,0 +1,141 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+:root {
+	--bg-color: hsl(165, 31%, 57%);
+	--cell-bg: hsl(25, 25%, 29%);
+	--cell-hover-bg: hsl(25, 25%, 20%);
+	--board-bg: hsl(31, 72%, 50%);
+	--color-x: hsl(345, 73%, 50%);
+	--color-o: hsl(204, 76%, 50%);
+	--cell-size: 6rem;
+	--title-size: 3rem;
+	--container-spacing: 5vh;
+	--create-bg: hsl(308, 18%, 60%);
+	--join-bg: hsl(6, 75%, 60%);
+	--create-hover-bg: hsl(308, 18%, 50%);
+	--join-hover-bg: hsl(6, 75%, 50%);
+	--create-active-bg: hsl(308, 18%, 40%);
+	--join-active-bg: hsl(6, 75%, 40%);
+	--reset-bg: hsl(7, 40%, 70%);
+	--reset-hover-bg: hsl(7, 40%, 60%);
+	--reset-active-bg: hsl(7, 40%, 50%);
+}
+
+body {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--container-spacing);
+	font-family: system-ui, sans-serif;
+	background-color: var(--bg-color);
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: calc(var(--container-spacing) * 0.5);
+}
+
+.game-header {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--container-spacing);
+	padding-top: calc(var(--container-spacing) * 1.5);
+}
+.game-header > h1 {
+	font-size: var(--title-size);
+}
+#game-status {
+	font-size: calc(var(--title-size) * 0.5);
+	text-align: center;
+}
+
+.header-buttons,
+.player-type {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 2rem;
+}
+
+button:not(.board > button),
+.player-type li {
+	border: 2px solid;
+	padding: 2px;
+	border-radius: 4px;
+	box-shadow: 2px 2px 2px hsl(111, 43%, 25%);
+}
+button:not(.board > button) {
+	width: calc(var(--title-size) * 3);
+	height: 35px;
+}
+.create-game {
+	background-color: var(--create-bg);
+}
+.create-game:hover {
+	background-color: var(--create-hover-bg);
+}
+.create-game:active {
+	background-color: var(--create-active-bg);
+}
+.join-game {
+	background-color: var(--join-bg);
+}
+.join-game:hover {
+	background-color: var(--join-hover-bg);
+}
+.join-game:active {
+	background-color: var(--create-active-bg);
+}
+.reset-game {
+	background-color: var(--reset-bg);
+}
+.reset-game:hover {
+	background-color: var(--reset-hover-bg);
+}
+.reset-game:active {
+	background-color: var(--reset-active-bg);
+}
+.player-type {
+	list-style: none;
+}
+.player-type li:first-child {
+	background-color: var(--color-x);
+}
+.player-type li:last-child {
+	background-color: var(--color-o);
+}
+.board {
+	display: grid;
+	grid-template-columns: repeat(3, var(--cell-size));
+	grid-template-rows: repeat(3, var(--cell-size));
+	background-color: var(--board-bg);
+	gap: 8px;
+	padding: 8px;
+	border: 2.5px solid;
+	border-radius: 8px;
+	box-shadow: 5px 5px 5px hsl(111, 43%, 25%);
+}
+
+.cell {
+	background-color: var(--cell-bg);
+	cursor: pointer;
+	border: 2.5px solid;
+	border-radius: 4px;
+}
+
+.cell:hover {
+	background-color: var(--cell-hover-bg);
+}
