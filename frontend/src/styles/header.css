@@ -1,0 +1,32 @@
+header > h1 {
+	font-size: var(--title-size);
+}
+
+#game-status {
+	font-size: calc(var(--title-size) * 0.5);
+	text-align: center;
+}
+
+.create-game {
+	background-color: var(--create-bg);
+}
+
+.create-game:hover {
+	background-color: var(--create-hover-bg);
+}
+
+.create-game:active {
+	background-color: var(--create-active-bg);
+}
+
+.join-game {
+	background-color: var(--join-bg);
+}
+
+.join-game:hover {
+	background-color: var(--join-hover-bg);
+}
+
+.join-game:active {
+	background-color: var(--create-active-bg);
+}

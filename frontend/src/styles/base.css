@@ -1,0 +1,56 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--container-spacing);
+	font-family: system-ui, sans-serif;
+	background-color: var(--bg-color);
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: calc(var(--container-spacing) * 0.5);
+}
+
+header {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: var(--container-spacing);
+	padding-top: calc(var(--container-spacing) * 1.5);
+}
+
+button:not(.board > button) {
+	width: calc(var(--title-size) * 3);
+	height: 35px;
+}
+
+.header-buttons,
+.player-type {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 2rem;
+}
+
+button:not(.board > button),
+.player-type li {
+	border: 2px solid;
+	padding: 2px;
+	border-radius: 4px;
+	box-shadow: 2px 2px 2px var(--shadow-color);
+}

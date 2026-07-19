@@ -1,0 +1,46 @@
+.player-type {
+	list-style: none;
+}
+
+.player-type li:first-child {
+	background-color: var(--color-x);
+}
+
+.player-type li:last-child {
+	background-color: var(--color-o);
+}
+
+.board {
+	display: grid;
+	grid-template-columns: repeat(3, var(--cell-size));
+	grid-template-rows: repeat(3, var(--cell-size));
+	background-color: var(--board-bg);
+	gap: 8px;
+	padding: 8px;
+	border: 2.5px solid;
+	border-radius: 8px;
+	box-shadow: 5px 5px 5px var(--shadow-color);
+}
+
+.cell {
+	background-color: var(--cell-bg);
+	cursor: pointer;
+	border: 2.5px solid;
+	border-radius: 4px;
+}
+
+.cell:hover {
+	background-color: var(--cell-hover-bg);
+}
+
+.reset-game {
+	background-color: var(--reset-bg);
+}
+
+.reset-game:hover {
+	background-color: var(--reset-hover-bg);
+}
+
+.reset-game:active {
+	background-color: var(--reset-active-bg);
+}
