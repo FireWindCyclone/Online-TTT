@@ -33,6 +33,24 @@
 	background-color: var(--cell-hover-bg);
 }
 
+.cell:disabled {
+	pointer-events: none;
+	background-color: var(--cell-hover-bg);
+	border-color: black;
+}
+
+.cell-x::before {
+	content: "X";
+	color: var(--color-x);
+	font-size: var(--cell-content-size);
+}
+
+.cell-o::before {
+	content: "O";
+	color: var(--color-o);
+	font-size: var(--cell-content-size);
+}
+
 .reset-game {
 	background-color: var(--reset-bg);
 }
