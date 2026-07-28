@@ -9,12 +9,26 @@
 	<body>
 		<header>
 			<h1>Tic-Tac-Toe</h1>
-			<p id="game-status">Create or join a game to play with friends online</p>
+			<p class="game-status">
+				Create or join a game to play with friends online
+			</p>
 			<div class="header-buttons">
 				<button class="create-game" type="button">Create</button>
 				<button class="join-game" type="button">Join</button>
 			</div>
 		</header>
+
+		<section class="create-panel" hidden>
+			<p class="game-status">Creating...</p>
+			<button id="game-id" type="button">Code</button>
+			<button type="button">Close</button>
+		</section>
+
+		<section class="join-panel" hidden>
+			<p class="game-status">Enter game code to join</p>
+			<input class="code-input" type="text" maxlength="4" placeholder="Code">
+			<button type="button">Join</button>
+		</section>
 
 		<main>
 			<ul class="player-type">
@@ -34,7 +48,7 @@
 				<button class="cell" data-index="8" type="button"></button>
 			</div>
 
-			<button class="reset-game" type="button">Reset</button>
+			<button class="reset-game" type="button">Clear</button>
 		</main>
 	</body>
 </html>

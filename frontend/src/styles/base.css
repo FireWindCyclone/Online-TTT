@@ -6,37 +6,111 @@
 	padding: 0;
 }
 
-body {
+[hidden] {
+	display: none;
+}
+
+body,
+header,
+main,
+section {
 	display: flex;
-	height: 100%;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+}
+
+body {
+	height: 100%;
 	gap: var(--container-spacing);
 	font-family: system-ui, sans-serif;
 	background-color: var(--bg-color);
 }
 
 main {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
 	gap: calc(var(--container-spacing) * 0.5);
 }
 
 header {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
 	gap: var(--container-spacing);
 	padding-top: calc(var(--container-spacing) * 1.5);
 }
 
-button:not(.board > button) {
+section {
+	background-color: var(--section-bg);
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 50%;
+	width: 90%;
+	gap: calc(var(--container-spacing) * 2);
+	border: 2px solid;
+	padding: 10px;
+}
+
+button {
 	width: calc(var(--title-size) * 3);
 	height: 35px;
+}
+
+button,
+.code-input,
+.player-type li {
+	border: 2px solid;
+	padding: 2px;
+	border-radius: 4px;
+	box-shadow: 2px 2px 2px var(--shadow-color);
+}
+
+.code-input,
+section button {
+	font-size: calc(var(--title-size) * 0.5);
+	width: calc(var(--title-size) * 5);
+	height: 50px;
+}
+
+.create-panel button {
+	background-color: var(--reset-bg);
+	box-shadow: 2px 2px 2px var(--section-shadow-bg);
+}
+
+.create-panel button:hover {
+	background-color: var(--reset-hover-bg);
+}
+
+.create-panel button:active {
+	background-color: var(--reset-active-bg);
+}
+
+#game-id {
+	background-color: transparent;
+	box-shadow: none;
+}
+#game-id:hover {
+	background-color: var(--section-hover-bg);
+}
+.join-panel button {
+	background-color: var(--join-bg);
+	box-shadow: 2px 2px 2px var(--section-shadow-bg);
+}
+.join-panel button:hover {
+	background-color: var(--join-hover-bg);
+}
+.join-panel button:active {
+	background-color: var(--join-active-bg);
+}
+
+.code-input {
+	background-color: lightgreen;
+	text-align: center;
+	text-transform: uppercase;
+	letter-spacing: 4px;
+	outline: none;
+	box-shadow: none;
+}
+.code-input:focus {
+	border-color: cornflowerblue;
 }
 
 .header-buttons,
@@ -45,12 +119,4 @@ button:not(.board > button) {
 	justify-content: center;
 	align-items: center;
 	gap: 2rem;
-}
-
-button:not(.board > button),
-.player-type li {
-	border: 2px solid;
-	padding: 2px;
-	border-radius: 4px;
-	box-shadow: 2px 2px 2px var(--shadow-color);
 }

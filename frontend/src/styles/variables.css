@@ -18,5 +18,8 @@
 	--reset-hover-bg: hsl(7, 40%, 60%);
 	--reset-active-bg: hsl(7, 40%, 50%);
 	--shadow-color: hsl(111, 43%, 25%);
+	--section-bg: hsl(310, 51%, 80%);
+	--section-shadow-bg: hsl(310, 51%, 30%);
+	--section-hover-bg: hsl(310, 51%, 70%);
 	--cell-content-size: 5rem;
 }

@@ -24,9 +24,12 @@
 
 .cell {
 	background-color: var(--cell-bg);
+	width: auto;
+	height: auto;
 	cursor: pointer;
 	border: 2.5px solid;
 	border-radius: 4px;
+	box-shadow: none;
 }
 
 .cell:hover {
