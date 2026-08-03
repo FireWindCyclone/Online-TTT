@@ -1,0 +1,55 @@
+button {
+	outline: none;
+	transition: background-color 120ms ease;
+	&:focus-visible {
+		border-color: seashell;
+	}
+}
+.btn {
+	--btn-bg: white;
+	background: var(--btn-bg);
+	width: calc(var(--title-size) * 3);
+	height: 35px;
+	cursor: pointer;
+	&:hover {
+		background: color-mix(in oklab, var(--btn-bg), black 12%);
+	}
+	&:active {
+		background: color-mix(in oklab, var(--btn-bg), black 24%);
+	}
+	&:disabled {
+		pointer-events: none;
+		box-shadow: none;
+		background: color-mix(in oklab, var(--btn-bg), black 24%);
+		color: black;
+		border-color: black;
+	}
+}
+
+.create-game {
+	--btn-bg: var(--create-bg);
+}
+
+.join-game {
+	--btn-bg: var(--join-bg);
+}
+
+.reset-game {
+	--btn-bg: var(--reset-bg);
+}
+
+.code-input,
+dialog .btn {
+	font-size: calc(var(--title-size) * 0.5);
+	width: calc(var(--title-size) * 5);
+	height: 50px;
+}
+
+.btn,
+.code-input,
+.player-type li {
+	border: 2px solid;
+	padding: 2px;
+	border-radius: 4px;
+	box-shadow: 2px 2px 2px color-mix(in oklab, var(--bg), black 24%);
+}

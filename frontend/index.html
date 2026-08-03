@@ -6,32 +6,37 @@
 		<title>Online Tic Tac Toe</title>
 		<script type="module" src="/src/main.ts"></script>
 	</head>
-	<body>
-		<header>
+	<body class="v-con">
+		<header class="v-con">
 			<h1>Tic-Tac-Toe</h1>
-			<p class="game-status">
+			<p class="game-status" aria-live="polite">
 				Create or join a game to play with friends online
 			</p>
-			<div class="header-buttons">
-				<button class="create-game" type="button">Create</button>
-				<button class="join-game" type="button">Join</button>
+			<div class="h-con">
+				<button class="btn create-game" type="button">Create</button>
+				<button class="btn join-game" type="button">Join</button>
 			</div>
 		</header>
 
-		<section class="create-panel" hidden>
-			<p class="game-status">Creating...</p>
-			<button id="game-id" type="button">Code</button>
-			<button type="button">Close</button>
+		<section>
+			<dialog class="v-con create-panel">
+				<p class="game-status" aria-live="polite">Creating game...</p>
+				<button class="btn game-id" type="button">Code</button>
+				<button class="btn" type="button">Close</button>
+			</dialog>
+
+			<dialog class="v-con join-panel">
+				<p class="game-status" aria-live="polite">Enter game code to join</p>
+				<form class="v-con">
+					<input class="code-input" type="text" placeholder="Code" required>
+					<button class="btn" type="submit">Enter</button>
+				</form>
+				<button class="btn" type="button">Close</button>
+			</dialog>
 		</section>
 
-		<section class="join-panel" hidden>
-			<p class="game-status">Enter game code to join</p>
-			<input class="code-input" type="text" maxlength="4" placeholder="Code">
-			<button type="button">Join</button>
-		</section>
-
-		<main>
-			<ul class="player-type">
+		<main class="v-con">
+			<ul class="h-con player-type">
 				<li>You (X)</li>
 				<li>Opponent (O)</li>
 			</ul>
@@ -48,7 +53,7 @@
 				<button class="cell" data-index="8" type="button"></button>
 			</div>
 
-			<button class="reset-game" type="button">Clear</button>
+			<button class="btn reset-game" type="button">Clear</button>
 		</main>
 	</body>
 </html>

@@ -1,25 +1,14 @@
 :root {
-	--bg-color: hsl(165, 31%, 57%);
-	--cell-bg: hsl(25, 25%, 29%);
-	--cell-hover-bg: hsl(25, 25%, 20%);
-	--board-bg: hsl(31, 72%, 50%);
-	--color-x: hsl(345, 73%, 50%);
-	--color-o: hsl(204, 76%, 50%);
+	--bg: oklch(0.7 0.074 176.42);
+	--cell-bg: oklch(0.416 0.038 56.97);
+	--board-bg: oklch(0.69 0.148 61.237);
+	--color-x: oklch(0.64 0.216 14.625);
+	--color-o: oklch(0.64 0.151 244.792);
+	--create-bg: oklch(0.75 0.063 330.787);
+	--join-bg: oklch(0.75 0.174 29.047);
+	--reset-bg: oklch(0.75 0.066 27.292);
 	--cell-size: 6rem;
 	--title-size: 3rem;
 	--container-spacing: 5vh;
-	--create-bg: hsl(308, 18%, 60%);
-	--join-bg: hsl(6, 75%, 60%);
-	--create-hover-bg: hsl(308, 18%, 50%);
-	--join-hover-bg: hsl(6, 75%, 50%);
-	--create-active-bg: hsl(308, 18%, 40%);
-	--join-active-bg: hsl(6, 75%, 40%);
-	--reset-bg: hsl(7, 40%, 70%);
-	--reset-hover-bg: hsl(7, 40%, 60%);
-	--reset-active-bg: hsl(7, 40%, 50%);
-	--shadow-color: hsl(111, 43%, 25%);
-	--section-bg: hsl(310, 51%, 80%);
-	--section-shadow-bg: hsl(310, 51%, 30%);
-	--section-hover-bg: hsl(310, 51%, 70%);
 	--cell-content-size: 5rem;
 }

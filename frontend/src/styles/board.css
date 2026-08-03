@@ -1,0 +1,47 @@
+.player-type {
+	list-style: none;
+	& li:first-child {
+		background: var(--color-x);
+	}
+	& li:last-child {
+		background: var(--color-o);
+	}
+}
+
+.board {
+	display: grid;
+	grid-template-columns: repeat(3, var(--cell-size));
+	grid-template-rows: repeat(3, var(--cell-size));
+	background: var(--board-bg);
+	gap: 8px;
+	padding: 8px;
+	border: 2.5px solid;
+	border-radius: 8px;
+	box-shadow: 5px 5px 5px color-mix(in oklab, var(--bg), black 24%);
+}
+
+.cell {
+	background: var(--cell-bg);
+	cursor: pointer;
+	border: 2.5px solid;
+	border-radius: 4px;
+	box-shadow: none;
+	font-size: var(--cell-content-size);
+	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
+	&:hover {
+		background: var(--cell-dark-bg);
+	}
+	&:disabled {
+		pointer-events: none;
+		background: var(--cell-dark-bg);
+		border-color: black;
+	}
+	&.cell-x::before {
+		content: "X";
+		color: var(--color-x);
+	}
+	&.cell-o::before {
+		content: "O";
+		color: var(--color-o);
+	}
+}

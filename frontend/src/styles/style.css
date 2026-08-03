@@ -1,4 +1,5 @@
 @import "./variables.css";
 @import "./base.css";
-@import "./header.css";
-@import "./main.css";
+@import "./buttons.css";
+@import "./panels.css";
+@import "./board.css";

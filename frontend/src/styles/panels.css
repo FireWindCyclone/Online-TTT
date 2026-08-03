@@ -1,0 +1,32 @@
+.create-panel {
+	--bg: var(--create-bg);
+	& .btn {
+		--btn-bg: var(--reset-bg);
+	}
+	& .game-id {
+		background: transparent;
+		&:hover {
+			background: color-mix(in oklab, var(--bg), black 12%);
+		}
+	}
+}
+
+.join-panel {
+	--bg: var(--join-bg);
+	& .btn {
+		--btn-bg: var(--create-bg);
+	}
+	& > .btn {
+		--btn-bg: var(--reset-bg);
+	}
+	& .code-input {
+		background: burlywood;
+		text-align: center;
+		text-transform: uppercase;
+		letter-spacing: 4px;
+		outline: none;
+		&:focus {
+			border-color: lightseagreen;
+		}
+	}
+}
