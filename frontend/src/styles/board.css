@@ -32,9 +32,9 @@
 		background: var(--cell-dark-bg);
 	}
 	&:disabled {
-		pointer-events: none;
 		background: var(--cell-dark-bg);
 		border-color: black;
+		cursor: not-allowed;
 	}
 	&.cell-x::before {
 		content: "X";

@@ -22,8 +22,8 @@
 
 body {
 	min-height: 100dvh;
-	gap: var(--container-spacing);
-	font-family: system-ui, sans-serif;
+	gap: calc(var(--container-spacing) * 0.5);
+	font-family: sans-serif;
 	background: var(--bg);
 }
 

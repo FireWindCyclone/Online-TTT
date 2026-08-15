@@ -1,3 +1,12 @@
+export type Session = {
+	playerId: 0 | 1 | null;
+	gameId: string | null;
+};
+export const session: Session = {
+	playerId: null,
+	gameId: null,
+};
+
 type CellType = "X" | "O";
 
 const CELL_CLASS: Record<CellType, string> = {
@@ -5,24 +14,20 @@ const CELL_CLASS: Record<CellType, string> = {
 	O: "cell-o",
 };
 
-export default class Board {
-	private board: (CellType | null)[];
-	private playerTurn: CellType;
+class Board {
 	private cells: NodeListOf<HTMLButtonElement>;
+	private playerTurn: CellType = "X";
+	private clearBtn: HTMLButtonElement;
 
 	constructor() {
-		this.playerTurn = "X";
-		this.board = Array(9).fill(null);
 		this.cells = document.querySelectorAll<HTMLButtonElement>(".cell");
 		this.cells.forEach((cell) => {
 			cell.addEventListener("click", this);
 		});
-		document
-			.querySelector(".reset-game")
-			?.addEventListener("click", (_) => this.reset());
+		this.clearBtn = document.querySelector(".reset-game")!;
+		this.clearBtn?.addEventListener("click", (_) => this.reset());
 	}
 	applyMove(idx: number) {
-		this.board[idx] = this.playerTurn;
 		this.cells[idx].disabled = true;
 		this.renderCell(idx);
 		this.playerTurn = this.playerTurn === "X" ? "O" : "X";
@@ -31,12 +36,19 @@ export default class Board {
 		this.cells[idx].classList.add(CELL_CLASS[this.playerTurn]);
 	}
 	reset() {
-		this.board = Array(9).fill(null);
 		this.playerTurn = "X";
 		this.cells.forEach((cell) => {
 			cell.className = "cell";
 			cell.disabled = false;
 		});
+	}
+
+	connected() {
+		this.reset();
+		this.clearBtn.hidden = true;
+		const playerTypeUl =
+			document.querySelector<HTMLUListElement>(".player-type");
+		playerTypeUl!.hidden = false;
 	}
 
 	handleEvent(event: Event) {
@@ -45,3 +57,9 @@ export default class Board {
 		this.applyMove(idx);
 	}
 }
+
+const board = new Board();
+
+export type { Board };
+
+export default board;

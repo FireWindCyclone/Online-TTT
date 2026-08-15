@@ -18,11 +18,11 @@ button {
 		background: color-mix(in oklab, var(--btn-bg), black 24%);
 	}
 	&:disabled {
-		pointer-events: none;
 		box-shadow: none;
 		background: color-mix(in oklab, var(--btn-bg), black 24%);
 		color: black;
 		border-color: black;
+		cursor: not-allowed;
 	}
 }
 
@@ -34,7 +34,8 @@ button {
 	--btn-bg: var(--join-bg);
 }
 
-.reset-game {
+.reset-game,
+.close {
 	--btn-bg: var(--reset-bg);
 }
 

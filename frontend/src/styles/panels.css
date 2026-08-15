@@ -1,10 +1,8 @@
 .create-panel {
 	--bg: var(--create-bg);
-	& .btn {
-		--btn-bg: var(--reset-bg);
-	}
-	& .game-id {
+	& > .game-id {
 		background: transparent;
+		box-shadow: none;
 		&:hover {
 			background: color-mix(in oklab, var(--bg), black 12%);
 		}
@@ -13,11 +11,8 @@
 
 .join-panel {
 	--bg: var(--join-bg);
-	& .btn {
+	& > form > .btn {
 		--btn-bg: var(--create-bg);
-	}
-	& > .btn {
-		--btn-bg: var(--reset-bg);
 	}
 	& .code-input {
 		background: burlywood;

@@ -21,8 +21,8 @@
 		<section>
 			<dialog class="v-con create-panel">
 				<p class="game-status" aria-live="polite">Creating game...</p>
-				<button class="btn game-id" type="button">Code</button>
-				<button class="btn" type="button">Close</button>
+				<button class="btn game-id" type="button" hidden>Code</button>
+				<button class="btn close" type="button">Close</button>
 			</dialog>
 
 			<dialog class="v-con join-panel">
@@ -31,12 +31,12 @@
 					<input class="code-input" type="text" placeholder="Code" required>
 					<button class="btn" type="submit">Enter</button>
 				</form>
-				<button class="btn" type="button">Close</button>
+				<button class="btn close" type="button">Close</button>
 			</dialog>
 		</section>
 
 		<main class="v-con">
-			<ul class="h-con player-type">
+			<ul class="h-con player-type" hidden>
 				<li>You (X)</li>
 				<li>Opponent (O)</li>
 			</ul>
