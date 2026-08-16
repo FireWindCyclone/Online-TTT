@@ -7,16 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import game.ttt.dto.UpdatePosDto;
+import game.ttt.dto.PosDto;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
     private volatile SseEmitter player0;
     private volatile SseEmitter player1;
-    private Instant updatedAt = Instant.now();
-    private int score0;
-    private int score1;
-    private Player playerTurn;
+    private Instant updatedAt = Instant.now(); // only used in scheduler thread so not volatile
+    private int score0; // only used inside synchronized(room)
+    private int score1; // only used inside synchronized(room)
+    private Player playerTurn; // only used inside synchronized(room)
+    private boolean gameOver = false; // only used inside synchronized(room)
 
     public GameRoom() {
         this.playerTurn = ThreadLocalRandom.current().nextBoolean() ? Player.PLAYER_0 : Player.PLAYER_1;
@@ -34,8 +35,12 @@ public class GameRoom {
             case PLAYER_0 -> player0 = null;
             case PLAYER_1 -> player1 = null;
         }
-        log.debug("Player {} disconnected. Notifying {}", player, player.getOtherPlayer());
-        sendDisconnect(player.getOtherPlayer());
+        log.debug("Player {} disconnected", player);
+
+        if (!gameOver) {
+            log.debug("Notifying {}", player.getOtherPlayer());
+            sendDisconnect(player.getOtherPlayer());
+        }
     }
 
     private void sendDisconnect(Player player) {
@@ -71,7 +76,7 @@ public class GameRoom {
         return sse;
     }
 
-    public void syncGame(Player player, UpdatePosDto pos) {
+    public void syncGame(Player player, PosDto pos) {
         playerTurn = player;
         SseEmitter emitter = getEmitter(player);
 
@@ -136,6 +141,7 @@ public class GameRoom {
     }
 
     public void playerWon(Player player) {
+        gameOver = true;
         String winEvent = "won-" + player.getSymbol();
         sendWinner(player, winEvent);
         sendWinner(player.getOtherPlayer(), winEvent);

@@ -24,4 +24,10 @@ public class GameExceptionHandler {
         log.error(ex.getMessage());
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception ex) {
+        log.error(ex.getMessage());
+        return ResponseEntity.internalServerError().body(ex.getMessage());
+    }
 }

@@ -3,7 +3,7 @@ package game.ttt.controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import game.ttt.dto.UpdatePosDto;
+import game.ttt.dto.PosDto;
 import game.ttt.model.Player;
 import game.ttt.service.GameService;
 
@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -29,7 +29,6 @@ public class GameController {
 
     @GetMapping("/games/{gameId}/show")
     public ResponseEntity<String> showGame(@PathVariable Long gameId) {
-        gameService.checkGameId(gameId);
         String board = gameService.showGame(gameId);
         return ResponseEntity.ok(board);
     }
@@ -41,9 +40,9 @@ public class GameController {
         return ResponseEntity.status(HttpStatus.CREATED).body(gameId);
     }
 
-    @PutMapping("/games/{gameId}/move/{playerId}")
+    @PatchMapping("/games/{gameId}/move/{playerId}")
     public ResponseEntity<Void> playerMove(@PathVariable Long gameId, @PathVariable Integer playerId,
-            @RequestBody UpdatePosDto pos) {
+            @RequestBody PosDto pos) {
 
         Player player = Player.fromId(playerId);
         gameService.makeMove(gameId, player, pos);
@@ -53,7 +52,6 @@ public class GameController {
 
     @GetMapping("/games/{gameId}/join/{playerId}")
     public ResponseEntity<SseEmitter> joinGame(@PathVariable Long gameId, @PathVariable Integer playerId) {
-        gameService.checkGameId(gameId);
         Player player = Player.fromId(playerId);
         SseEmitter sse = gameService.createConnection(gameId, player);
         log.info("Player {} joined game {}", player, gameId);

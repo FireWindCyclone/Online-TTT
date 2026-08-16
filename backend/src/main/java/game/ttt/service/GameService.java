@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import game.ttt.dto.UpdatePosDto;
+import game.ttt.dto.PosDto;
 import game.ttt.entity.BoardInfo;
 import game.ttt.exception.PlayerException;
 import game.ttt.model.GameRoom;
@@ -32,21 +32,22 @@ public class GameService {
         this.gameRepo = gameRepo;
     }
 
-    public void makeMove(Long gameId, Player player, UpdatePosDto pos) {
-        GameRoom room = gameRooms.get(gameId);
-        if (room == null || room.getEmitter(player) == null || room.getEmitter(player.getOtherPlayer()) == null) {
-            throw new PlayerException("Not enough players to play the game " + gameId);
-        }
-
-        log.debug("Both emitters for game {} are present", gameId);
-
+    public void makeMove(Long gameId, Player player, PosDto pos) {
+        GameRoom room = getRoom(gameId);
         synchronized (room) {
+            if (room.getEmitter(player) == null || room.getEmitter(player.getOtherPlayer()) == null) {
+                throw new PlayerException("Not enough players to play the game " + gameId);
+            }
+            log.debug("Both emitters for game {} are present", gameId);
+
             if (!room.isPlayerTurn(player)) {
                 throw new PlayerException("Not the player " + player + " turn yet");
             }
             log.debug("Correct player {} making move for game {}", player, gameId);
 
-            BoardInfo boardInfo = gameRepo.findById(gameId).get();
+            BoardInfo boardInfo = gameRepo.findById(gameId)
+                    .orElseThrow(() -> new GameNotFoundException(
+                            "Can't make move. Game with ID " + gameId + " doesn't exist"));
             String board = boardInfo.getBoard();
             if (board.charAt(pos.index()) != ' ') {
                 throw new PlayerException(
@@ -69,7 +70,7 @@ public class GameService {
     }
 
     public SseEmitter createConnection(Long gameId, Player player) {
-        GameRoom room = gameRooms.computeIfAbsent(gameId, _ -> new GameRoom());
+        GameRoom room = getRoom(gameId);
         synchronized (room) {
             if (!room.canPlayerJoin(player)) {
                 throw new PlayerException("Player " + player + " can't join Game " + gameId);
@@ -87,11 +88,13 @@ public class GameService {
         }
     }
 
-    public void checkGameId(Long gameId) {
-        if (!gameRooms.containsKey(gameId)) {
+    private GameRoom getRoom(Long gameId) {
+        GameRoom room = gameRooms.get(gameId);
+        if (room == null) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
         }
         log.debug("Game {} exists", gameId);
+        return room;
     }
 
     public Long createGameId() {
@@ -101,13 +104,16 @@ public class GameService {
     }
 
     public String showGame(Long gameId) {
-        return gameRepo.findById(gameId).get().getBoard();
+        return gameRepo.findById(gameId)
+                .orElseThrow(
+                        () -> new GameNotFoundException("Can't show game. Game with ID " + gameId + " doesn't exist"))
+                .getBoard();
     }
 
     @Scheduled(fixedRate = 15000)
-    private void checkClientPresent() {
+    public void checkClientPresent() {
         gameRooms.entrySet().removeIf(entry -> {
-            if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 30) {
+            if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 60) {
                 log.debug("Removing Game {}", entry.getKey());
                 gameRepo.deleteById(entry.getKey());
                 return true;
