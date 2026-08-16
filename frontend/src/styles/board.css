@@ -13,8 +13,8 @@
 	grid-template-columns: repeat(3, var(--cell-size));
 	grid-template-rows: repeat(3, var(--cell-size));
 	background: var(--board-bg);
-	gap: 8px;
-	padding: 8px;
+	gap: calc(var(--title-size) * 0.2);
+	padding: 9px;
 	border: 2.5px solid;
 	border-radius: 8px;
 	box-shadow: 5px 5px 5px color-mix(in oklab, var(--bg), black 24%);
@@ -28,7 +28,12 @@
 	box-shadow: none;
 	font-size: var(--cell-content-size);
 	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
-	&:hover {
+	@media (hover: hover) {
+		&:hover {
+			background: var(--cell-dark-bg);
+		}
+	}
+	&:active {
 		background: var(--cell-dark-bg);
 	}
 	&:disabled {

@@ -4,6 +4,7 @@
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
+	-webkit-tap-highlight-color: transparent;
 }
 
 .v-con {
@@ -22,21 +23,21 @@
 
 body {
 	min-height: 100dvh;
-	gap: calc(var(--container-spacing) * 0.5);
+	gap: calc(var(--container-spacing));
 	font-family: sans-serif;
 	background: var(--bg);
 }
 
-main {
-	gap: calc(var(--container-spacing) * 0.5);
-}
-
 header {
 	gap: var(--container-spacing);
-	padding-top: calc(var(--container-spacing) * 1.5);
+	padding-top: calc(var(--container-spacing));
 	& > h1 {
 		font-size: var(--title-size);
 	}
+}
+
+main {
+	gap: calc(var(--container-spacing) * 0.5);
 }
 
 dialog {

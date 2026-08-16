@@ -18,22 +18,28 @@
 			</div>
 		</header>
 
-		<section>
-			<dialog class="v-con create-panel">
-				<p class="game-status" aria-live="polite">Creating game...</p>
-				<button class="btn game-id" type="button" hidden>Code</button>
-				<button class="btn close" type="button">Close</button>
-			</dialog>
+		<dialog class="v-con create-panel">
+			<p class="game-status" aria-live="polite">Creating game...</p>
+			<button class="btn game-id" type="button" hidden>Code</button>
+			<button class="btn close" type="button">Close</button>
+		</dialog>
 
-			<dialog class="v-con join-panel">
-				<p class="game-status" aria-live="polite">Enter game code to join</p>
-				<form class="v-con">
-					<input class="code-input" type="text" placeholder="Code" required>
-					<button class="btn" type="submit">Enter</button>
-				</form>
-				<button class="btn close" type="button">Close</button>
-			</dialog>
-		</section>
+		<dialog class="v-con join-panel">
+			<p class="game-status" aria-live="polite">Enter game code to join</p>
+			<form class="v-con">
+				<input
+					class="code-input"
+					name="code"
+					type="text"
+					placeholder="Code"
+					pattern="[A-Za-z0-9]+"
+					title="Only letters and numbers are allowed"
+					required
+				>
+				<button class="btn" type="submit">Enter</button>
+			</form>
+			<button class="btn close" type="button">Close</button>
+		</dialog>
 
 		<main class="v-con">
 			<ul class="h-con player-type" hidden>

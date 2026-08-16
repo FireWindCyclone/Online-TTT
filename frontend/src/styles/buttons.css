@@ -4,6 +4,9 @@ button {
 	&:focus-visible {
 		border-color: seashell;
 	}
+	&:active {
+		transform: scale(0.97);
+	}
 }
 .btn {
 	--btn-bg: white;
@@ -11,8 +14,10 @@ button {
 	width: calc(var(--title-size) * 3);
 	height: 35px;
 	cursor: pointer;
-	&:hover {
-		background: color-mix(in oklab, var(--btn-bg), black 12%);
+	@media (hover: hover) {
+		&:hover {
+			background: color-mix(in oklab, var(--btn-bg), black 12%);
+		}
 	}
 	&:active {
 		background: color-mix(in oklab, var(--btn-bg), black 24%);
