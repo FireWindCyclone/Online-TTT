@@ -2,7 +2,7 @@ package game.ttt.service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,7 +26,7 @@ public class GameService {
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
     private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
-    private static final List<Integer> WIN_SCORES = List.of(7, 56, 448, 73, 146, 292, 273, 84);
+    private static final int[] WIN_SCORES = { 7, 56, 448, 73, 146, 292, 273, 84 };
 
     public GameService(GameRepository gameRepo) {
         this.gameRepo = gameRepo;
@@ -35,11 +35,6 @@ public class GameService {
     public void makeMove(Long gameId, Player player, PosDto pos) {
         GameRoom room = getRoom(gameId);
         synchronized (room) {
-            if (room.getEmitter(player) == null || room.getEmitter(player.getOtherPlayer()) == null) {
-                throw new PlayerException("Not enough players to play the game " + gameId);
-            }
-            log.debug("Both emitters for game {} are present", gameId);
-
             if (!room.isPlayerTurn(player)) {
                 throw new PlayerException("Not the player " + player + " turn yet");
             }
@@ -60,11 +55,17 @@ public class GameService {
             boardInfo.setBoard(new String(boardArr));
             gameRepo.save(boardInfo);
             room.incPlayerScore(player, 1 << pos.index());
-            room.syncGame(player.getOtherPlayer(), pos);
+            room.syncPlayerMove(player.getOtherPlayer(), pos);
 
-            if (WIN_SCORES.stream().anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
+            if (Arrays.stream(WIN_SCORES).anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
                 log.info("Player {} won in game {}", player, gameId);
-                room.playerWon(player);
+                String winStatus = "won-" + Character.toLowerCase(player.getSymbol());
+                room.finishGame(player, winStatus);
+                return;
+            }
+            if (room.isScoreFull()) {
+                log.info("Player {} draws game {}", player, gameId);
+                room.finishGame(player, "draw");
             }
         }
     }
@@ -75,16 +76,7 @@ public class GameService {
             if (!room.canPlayerJoin(player)) {
                 throw new PlayerException("Player " + player + " can't join Game " + gameId);
             }
-            SseEmitter sse = room.connectPlayer(player);
-
-            log.debug("Player {} connected to game {}. Syncing initial game state", player, gameId);
-
-            try {
-                sse.send(SseEmitter.event().name("sync").data(showGame(gameId)));
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed to send game " + gameId + " state to player " + player, ex);
-            }
-            return sse;
+            return room.connectPlayer(player, showGame(gameId));
         }
     }
 
@@ -115,7 +107,7 @@ public class GameService {
         gameRooms.entrySet().removeIf(entry -> {
             if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 60) {
                 log.debug("Removing Game {}", entry.getKey());
-                gameRepo.deleteById(entry.getKey());
+                gameRepo.deleteById(entry.getKey()); // can throw
                 return true;
             }
             return false;
