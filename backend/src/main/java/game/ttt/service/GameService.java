@@ -36,9 +36,9 @@ public class GameService {
         GameRoom room = getRoom(gameId);
         synchronized (room) {
             if (!room.isPlayerTurn(player)) {
-                throw new PlayerException("Not the player " + player + " turn yet");
+                throw new PlayerException("Not the player " + player + " turn yet in game " + gameId);
             }
-            log.debug("Correct player {} making move for game {}", player, gameId);
+            log.debug("Player {} turn. Making move", player);
 
             BoardInfo boardInfo = gameRepo.findById(gameId)
                     .orElseThrow(() -> new GameNotFoundException(
@@ -46,9 +46,9 @@ public class GameService {
             String board = boardInfo.getBoard();
             if (board.charAt(pos.index()) != ' ') {
                 throw new PlayerException(
-                        "Cannot mark position " + pos + " because its already filled");
+                        "Cannot mark position " + pos + " because its already filled in game " + gameId);
             }
-            log.debug("Valid move for game {} and pos {}", gameId, pos);
+            log.debug("Move {} is valid", pos);
 
             char[] boardArr = board.toCharArray();
             boardArr[pos.index()] = player.getSymbol();
@@ -58,13 +58,13 @@ public class GameService {
             room.syncPlayerMove(player.getOtherPlayer(), pos);
 
             if (Arrays.stream(WIN_SCORES).anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
-                log.info("Player {} won in game {}", player, gameId);
+                log.info("Player {} won. Game over", player);
                 String winStatus = "won-" + Character.toLowerCase(player.getSymbol());
                 room.finishGame(player, winStatus);
                 return;
             }
             if (room.isScoreFull()) {
-                log.info("Player {} draws game {}", player, gameId);
+                log.info("Player {} draws. Game over", player);
                 room.finishGame(player, "draw");
             }
         }
@@ -74,7 +74,7 @@ public class GameService {
         GameRoom room = getRoom(gameId);
         synchronized (room) {
             if (!room.canPlayerJoin(player)) {
-                throw new PlayerException("Player " + player + " can't join Game " + gameId);
+                throw new PlayerException("Player " + player + " can't join game " + gameId);
             }
             return room.connectPlayer(player, showGame(gameId));
         }
@@ -85,7 +85,7 @@ public class GameService {
         if (room == null) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
         }
-        log.debug("Game {} exists", gameId);
+        log.debug("Game room exists");
         return room;
     }
 
