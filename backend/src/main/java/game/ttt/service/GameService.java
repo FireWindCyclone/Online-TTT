@@ -26,7 +26,16 @@ public class GameService {
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
     private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
-    private static final int[] WIN_SCORES = { 7, 56, 448, 73, 146, 292, 273, 84 };
+    private static final int[] WIN_SCORES = {
+            0b111000000, // r1
+            0b000111000, // r2
+            0b000000111, // r3
+            0b100100100, // c1
+            0b010010010, // c2
+            0b001001001, // c3
+            0b100010001, // d1
+            0b001010100, // d2
+    };
 
     public GameService(GameRepository gameRepo) {
         this.gameRepo = gameRepo;

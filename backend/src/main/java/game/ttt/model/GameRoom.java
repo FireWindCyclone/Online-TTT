@@ -146,7 +146,7 @@ public class GameRoom {
     }
 
     public boolean isScoreFull() {
-        return (score0 + score1) == 0x1FF;
+        return (score0 + score1) == 0b111111111;
     }
 
     public void finishGame(Player player, String finishStatus) {
