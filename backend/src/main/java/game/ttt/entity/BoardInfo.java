@@ -17,7 +17,7 @@ public class BoardInfo {
     private Long id;
 
     @Column(name = "BOARD", nullable = false, length = 9)
-    private String board = "         ";
+    private String board = "*********";
 
     public Long getId() {
         return id;

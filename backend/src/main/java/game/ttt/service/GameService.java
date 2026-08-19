@@ -44,7 +44,7 @@ public class GameService {
                     .orElseThrow(() -> new GameNotFoundException(
                             "Can't make move. Game with ID " + gameId + " doesn't exist"));
             String board = boardInfo.getBoard();
-            if (board.charAt(pos.index()) != ' ') {
+            if (board.charAt(pos.index()) != '*') {
                 throw new PlayerException(
                         "Cannot mark position " + pos + " because its already filled in game " + gameId);
             }
@@ -76,7 +76,7 @@ public class GameService {
             if (!room.canPlayerJoin(player)) {
                 throw new PlayerException("Player " + player + " can't join game " + gameId);
             }
-            return room.connectPlayer(player, showGame(gameId));
+            return room.connectPlayer(player, showGame(gameId, false));
         }
     }
 
@@ -95,11 +95,15 @@ public class GameService {
         return gameId;
     }
 
-    public String showGame(Long gameId) {
-        return gameRepo.findById(gameId)
+    public String showGame(Long gameId, boolean multiLine) {
+        String board = gameRepo.findById(gameId)
                 .orElseThrow(
                         () -> new GameNotFoundException("Can't show game. Game with ID " + gameId + " doesn't exist"))
                 .getBoard();
+
+        return multiLine ? String.join("\n", board.subSequence(0, 3), board.subSequence(3, 6), board.subSequence(6, 9))
+                : board;
+
     }
 
     @Scheduled(fixedRate = 15000)

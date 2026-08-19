@@ -13,7 +13,6 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,9 +27,9 @@ public class GameController {
         this.gameService = gameService;
     }
 
-    @GetMapping("/games/{gameId}/show")
+    @GetMapping("/games/{gameId}")
     public ResponseEntity<String> showGame(@PathVariable Long gameId) {
-        String board = gameService.showGame(gameId);
+        String board = gameService.showGame(gameId, true);
         return ResponseEntity.ok(board);
     }
 
@@ -43,7 +42,7 @@ public class GameController {
         return ResponseEntity.status(HttpStatus.CREATED).body(gameId);
     }
 
-    @PatchMapping("/games/{gameId}/move/{playerId}")
+    @PostMapping("/games/{gameId}/move/{playerId}")
     public ResponseEntity<Void> playerMove(@PathVariable Long gameId, @PathVariable Integer playerId,
             @RequestBody PosDto pos) {
         MDC.put("gameId", gameId.toString());
