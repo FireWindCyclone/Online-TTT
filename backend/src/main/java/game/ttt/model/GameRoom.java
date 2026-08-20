@@ -2,6 +2,8 @@ package game.ttt.model;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -10,26 +12,30 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.PosDto;
+import game.ttt.dto.ScoreDto;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
     private volatile Optional<SseEmitter> player0 = Optional.empty();
     private volatile Optional<SseEmitter> player1 = Optional.empty();
     private Instant updatedAt = Instant.now(); // only used in scheduler thread so not volatile
-    private int score0; // only used inside synchronized(room)
-    private int score1; // only used inside synchronized(room)
+    private final Map<Player, ScoreDto> scores = new EnumMap<>(Player.class); // only used inside synchronized(room)
     private Player playerTurn; // only used inside synchronized(room)
     private boolean gameOver = false; // only used inside synchronized(room)
+    private final Map<Player, Character> symbols;
 
     public GameRoom() {
+        scores.put(Player.PLAYER_0, new ScoreDto(0));
+        scores.put(Player.PLAYER_1, new ScoreDto(0));
+
         this.playerTurn = ThreadLocalRandom.current().nextBoolean() ? Player.PLAYER_0 : Player.PLAYER_1;
+
+        boolean symbol = ThreadLocalRandom.current().nextBoolean();
+        this.symbols = Map.of(Player.PLAYER_0, symbol ? 'X' : 'O', Player.PLAYER_1, symbol ? 'O' : 'X');
     }
 
     private Optional<SseEmitter> getPlayerEmitter(Player player) {
-        return switch (player) {
-            case PLAYER_0 -> player0;
-            case PLAYER_1 -> player1;
-        };
+        return player == Player.PLAYER_0 ? player0 : player1;
     }
 
     private void setPlayerEmitter(Player player, SseEmitter sse) {
@@ -51,14 +57,13 @@ public class GameRoom {
     private void sendConnectionStatus(Player player, String status) {
         log.debug("Notifying connection status {} to player {}", status, player);
         try {
-            SseEmitter emitter = getPlayerEmitter(player).orElseThrow();
-            emitter.send(SseEmitter.event().name(status));
+            sendPlayerEvent(player, status, null);
         } catch (Exception ex) {
             log.debug("Failed to notify connection status {} to player {}: {}", status, player, ex.getMessage());
         }
     }
 
-    public SseEmitter connectPlayer(Player player, String gameState) {
+    public SseEmitter connectPlayer(Player player, String board) {
         SseEmitter sse = new SseEmitter(300000L); // 5 minutes
 
         sse.onCompletion(() -> {
@@ -74,30 +79,36 @@ public class GameRoom {
 
         setPlayerEmitter(player, sse);
 
-        log.debug("Player {} sse created. Syncing initial game state {}", player, gameState);
+        log.debug("Player {} sse created. Syncing initial game state {}", player, board);
 
         try {
-            sendPlayerData(player, "sync", gameState);
+            sendPlayerEvent(player, "sync",
+                    Map.of("board", board, "player_type", symbols.get(player), "player_turn", player == playerTurn));
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to send game state " + gameState + " to player " + player, ex);
+            throw new RuntimeException("Failed to send game state " + board + " to player " + player, ex);
         }
         sendConnectionStatus(player.getOtherPlayer(), "player-connected");
         return sse;
     }
 
-    public void syncPlayerMove(Player player, PosDto pos) {
+    private void syncPlayerMove(Player player, PosDto pos) {
         playerTurn = player;
         log.debug("Player {} syncing move {}", player, pos);
         try {
-            sendPlayerData(player, "move", pos);
+            sendPlayerEvent(player, "move", pos);
         } catch (Exception ex) {
             log.debug("Failed to sync move {} to player {}", pos, player);
         }
     }
 
-    private void sendPlayerData(Player player, String eventName, Object data) throws IOException {
-        SseEmitter emitter = getPlayerEmitter(player).orElseThrow();
-        emitter.send(SseEmitter.event().name(eventName).data(data));
+    private SseEmitter sendPlayerEvent(Player player, String eventName, Object eventData) throws IOException {
+        SseEmitter sse = getPlayerEmitter(player).orElseThrow();
+        if (eventData == null) {
+            sse.send(SseEmitter.event().name(eventName));
+        } else {
+            sse.send(SseEmitter.event().name(eventName).data(eventData));
+        }
+        return sse;
     }
 
     public boolean isPlayerTurn(Player player) {
@@ -119,8 +130,8 @@ public class GameRoom {
 
     private void pingPlayer(Player player) {
         try {
-            SseEmitter emitter = getPlayerEmitter(player).orElseThrow();
-            emitter.send(SseEmitter.event().comment("ping"));
+            SseEmitter sse = getPlayerEmitter(player).orElseThrow();
+            sse.send(SseEmitter.event().comment("ping"));
             updatedAt = Instant.now();
         } catch (Exception ex) {
             log.warn("Failed to ping player {}: {}", player, ex.getMessage());
@@ -131,38 +142,42 @@ public class GameRoom {
         return updatedAt;
     }
 
-    public int getPlayerScore(Player player) {
-        return switch (player) {
-            case PLAYER_0 -> score0;
-            case PLAYER_1 -> score1;
-        };
-    }
-
-    public void incPlayerScore(Player player, int inc) {
-        switch (player) {
-            case PLAYER_0 -> score0 += inc;
-            case PLAYER_1 -> score1 += inc;
-        }
-    }
-
-    public boolean isScoreFull() {
-        return (score0 + score1) == 0b111111111;
-    }
-
-    public void finishGame(Player player, String finishStatus) {
+    private void finishGame(String eventName, Object eventData) {
         gameOver = true;
-        sendGameOver(player, finishStatus);
-        sendGameOver(player.getOtherPlayer(), finishStatus);
+        sendGameOver(Player.PLAYER_0, eventName, eventData);
+        sendGameOver(Player.PLAYER_1, eventName, eventData);
     }
 
-    private void sendGameOver(Player player, String finishStatus) {
-        log.debug("Sending game over status {} to player {}", finishStatus, player);
+    private void sendGameOver(Player player, String eventName, Object eventData) {
+        log.debug("Sending game over event {} to player {}", eventName, player);
         try {
-            SseEmitter emitter = getPlayerEmitter(player).orElseThrow();
-            emitter.send(SseEmitter.event().name(finishStatus));
-            emitter.complete();
+            sendPlayerEvent(player, eventName, eventData).complete();
         } catch (Exception ex) {
-            log.debug("Failed to send game over status {} to player {}: {}", finishStatus, player, ex.getMessage());
+            log.debug("Failed to send game over event {} to player {}: {}", eventName, player, ex.getMessage());
         }
+    }
+
+    public void makePlayerMove(Player player, PosDto pos) {
+        log.debug("Player {} making move {}", player, pos);
+        ScoreDto newScore = scores.get(player).update(pos);
+        scores.put(player, newScore);
+
+        syncPlayerMove(player.getOtherPlayer(), pos);
+
+        Optional<ScoreDto> winScore = newScore.match();
+        winScore.ifPresent((score) -> {
+            log.info("Player {} won. Game over", player);
+            String winStatus = "won-" + Character.toLowerCase(symbols.get(player));
+            finishGame(winStatus, score.list());
+        });
+
+        if (!gameOver && ScoreDto.combine(scores.get(Player.PLAYER_0), scores.get(Player.PLAYER_1)).isFull()) {
+            log.info("Player {} draws. Game over", player);
+            finishGame("draw", null);
+        }
+    }
+
+    public char getPlayerSymbol(Player player) {
+        return symbols.get(player);
     }
 }

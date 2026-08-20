@@ -2,7 +2,6 @@ package game.ttt.service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,16 +25,6 @@ public class GameService {
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
     private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
-    private static final int[] WIN_SCORES = {
-            0b111000000, // r1
-            0b000111000, // r2
-            0b000000111, // r3
-            0b100100100, // c1
-            0b010010010, // c2
-            0b001001001, // c3
-            0b100010001, // d1
-            0b001010100, // d2
-    };
 
     public GameService(GameRepository gameRepo) {
         this.gameRepo = gameRepo;
@@ -52,6 +41,7 @@ public class GameService {
             BoardInfo boardInfo = gameRepo.findById(gameId)
                     .orElseThrow(() -> new GameNotFoundException(
                             "Can't make move. Game with ID " + gameId + " doesn't exist"));
+
             String board = boardInfo.getBoard();
             if (board.charAt(pos.index()) != '*') {
                 throw new PlayerException(
@@ -60,22 +50,10 @@ public class GameService {
             log.debug("Move {} is valid", pos);
 
             char[] boardArr = board.toCharArray();
-            boardArr[pos.index()] = player.getSymbol();
+            boardArr[pos.index()] = room.getPlayerSymbol(player);
             boardInfo.setBoard(new String(boardArr));
             gameRepo.save(boardInfo);
-            room.incPlayerScore(player, 1 << pos.index());
-            room.syncPlayerMove(player.getOtherPlayer(), pos);
-
-            if (Arrays.stream(WIN_SCORES).anyMatch(score -> (room.getPlayerScore(player) & score) == score)) {
-                log.info("Player {} won. Game over", player);
-                String winStatus = "won-" + Character.toLowerCase(player.getSymbol());
-                room.finishGame(player, winStatus);
-                return;
-            }
-            if (room.isScoreFull()) {
-                log.info("Player {} draws. Game over", player);
-                room.finishGame(player, "draw");
-            }
+            room.makePlayerMove(player, pos);
         }
     }
 
