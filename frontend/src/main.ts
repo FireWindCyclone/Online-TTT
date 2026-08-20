@@ -55,6 +55,7 @@ joinForm?.addEventListener("submit", async (event) => {
 	setBusy(joinPanel!, true);
 	const gameId = new FormData(joinForm).get("code") as string;
 	try {
+		board.setTurn(false);
 		const sse = await joinGame(gameId, 1);
 		session.playerId = 1;
 		session.gameId = gameId;
@@ -66,9 +67,10 @@ joinForm?.addEventListener("submit", async (event) => {
 		joinPanel?.close();
 		board.connected();
 	} catch (err) {
-		console.error("Failed to join", err);
+		console.error(err);
 		joinStatus!.textContent = "Failed to join game. Try again";
 		enterBtn.disabled = false;
+		board.setTurn(true);
 	} finally {
 		setBusy(joinPanel!, false);
 	}
@@ -82,6 +84,7 @@ createBtn?.addEventListener("click", async (event) => {
 	}
 	setBusy(createPanel!, true);
 	try {
+		board.setTurn(false);
 		const gameId = await createGame();
 		const sse = await joinGame(gameId, 0);
 
@@ -102,8 +105,9 @@ createBtn?.addEventListener("click", async (event) => {
 
 		console.log(`Created game: ${session.gameId}`);
 	} catch (err) {
-		console.error("Failed to create game", err);
+		console.error(err);
 		createStatus!.textContent = "Failed to create game :( Please try again";
+		board.setTurn(true);
 	} finally {
 		setBusy(createPanel!, false);
 	}

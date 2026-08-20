@@ -91,13 +91,13 @@ public class GameRoom {
         return sse;
     }
 
-    private void syncPlayerMove(Player player, PosDto pos) {
+    private void syncPlayerMove(Player player, Object moveData) {
         playerTurn = player;
-        log.debug("Player {} syncing move {}", player, pos);
+        log.debug("Player {} syncing move {}", player, moveData);
         try {
-            sendPlayerEvent(player, "move", pos);
+            sendPlayerEvent(player, "move", moveData);
         } catch (Exception ex) {
-            log.debug("Failed to sync move {} to player {}", pos, player);
+            log.debug("Failed to sync move {} to player {}", moveData, player);
         }
     }
 
@@ -162,7 +162,7 @@ public class GameRoom {
         ScoreDto newScore = scores.get(player).update(pos);
         scores.put(player, newScore);
 
-        syncPlayerMove(player.getOtherPlayer(), pos);
+        syncPlayerMove(player.getOtherPlayer(), Map.of("pos", pos, "type", symbols.get(player)));
 
         Optional<ScoreDto> winScore = newScore.match();
         winScore.ifPresent((score) -> {
