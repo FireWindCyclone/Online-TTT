@@ -1,13 +1,23 @@
+export type PlayerId = 0 | 1;
 export type Session = {
-	playerId: 0 | 1 | null;
+	playerId: PlayerId | null;
 	gameId: string | null;
+	sse: EventSource | null;
 };
+
 export const session: Session = {
 	playerId: null,
 	gameId: null,
+	sse: null,
 };
 
 type CellType = "X" | "O";
+
+export type SyncData = {
+	board: string;
+	playerType: CellType;
+	playerTurn: boolean;
+};
 
 const CELL_CLASS: Record<CellType, string> = {
 	X: "cell-x",
@@ -15,43 +25,65 @@ const CELL_CLASS: Record<CellType, string> = {
 };
 
 class Board {
-	private cells: NodeListOf<HTMLButtonElement>;
-	private playerTurn: CellType = "X";
-	private clearBtn: HTMLButtonElement;
+	private cells: NodeListOf<HTMLButtonElement> =
+		document.querySelectorAll<HTMLButtonElement>(".cell")!;
+	private playerType: CellType = "X";
+	private playerTurn: boolean = true;
+	private clearBtn: HTMLButtonElement = document.querySelector(".reset-game")!;
+	private playerTypeDisplay =
+		document.querySelector<HTMLUListElement>(".player-type")!;
 
 	constructor() {
-		this.cells = document.querySelectorAll<HTMLButtonElement>(".cell");
 		this.cells.forEach((cell) => {
 			cell.addEventListener("click", this);
 		});
-		this.clearBtn = document.querySelector(".reset-game")!;
 		this.clearBtn?.addEventListener("click", (_) => this.reset());
 	}
 	applyMove(idx: number) {
 		this.cells[idx].disabled = true;
 		this.renderCell(idx);
-		this.playerTurn = this.playerTurn === "X" ? "O" : "X";
+		this.playerType = this.playerType === "X" ? "O" : "X";
 	}
 	renderCell(idx: number) {
-		this.cells[idx].classList.add(CELL_CLASS[this.playerTurn]);
+		this.cells[idx].classList.add(CELL_CLASS[this.playerType]);
 	}
 	reset() {
-		this.playerTurn = "X";
+		this.playerType = "X";
 		this.cells.forEach((cell) => {
 			cell.className = "cell";
 			cell.disabled = false;
 		});
 	}
 
+	syncBoard(data: SyncData) {
+		this.playerType = data.playerType;
+		this.playerTurn = data.playerTurn;
+		for (const [i, c] of [...data.board].entries()) {
+			if (c !== "*") {
+				this.applyMove(i);
+			}
+		}
+		if (this.playerType === "X") {
+			return;
+		}
+		this.playerTypeDisplay.querySelector(
+			".player-type>li:nth-child(1)",
+		)!.textContent = "You (O)";
+		this.playerTypeDisplay.querySelector(
+			".player-type>li:nth-child(2)",
+		)!.textContent = "Opponent (X)";
+	}
+
 	connected() {
 		this.reset();
 		this.clearBtn.hidden = true;
-		const playerTypeUl =
-			document.querySelector<HTMLUListElement>(".player-type");
-		playerTypeUl!.hidden = false;
+		this.playerTypeDisplay.hidden = false;
 	}
 
 	handleEvent(event: Event) {
+		if (!this.playerTurn) {
+			return;
+		}
 		const cell = event.currentTarget as HTMLButtonElement;
 		const idx = parseInt(cell.dataset.index!, 10);
 		this.applyMove(idx);

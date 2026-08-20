@@ -1,4 +1,4 @@
-import { createGame } from "./api.ts";
+import { createGame, joinGame } from "./api.ts";
 import board, { session } from "./board.ts";
 import "./styles/style.css";
 
@@ -7,9 +7,14 @@ const gameStatus = document.querySelector<HTMLParagraphElement>(
 );
 const createPanel = document.querySelector<HTMLDialogElement>(".create-panel");
 const joinPanel = document.querySelector<HTMLDialogElement>(".join-panel");
+const joinForm = joinPanel?.querySelector("form");
+
 const createStatus =
 	createPanel?.querySelector<HTMLParagraphElement>(".game-status");
-const gameIdBtn = document.querySelector<HTMLButtonElement>(".game-id");
+const joinStatus =
+	joinPanel?.querySelector<HTMLParagraphElement>(".game-status");
+
+const gameIdBtn = createPanel?.querySelector<HTMLButtonElement>(".game-id");
 
 const createBtn = document.querySelector<HTMLButtonElement>(".create-game");
 const joinBtn = document.querySelector<HTMLButtonElement>(".join-game");
@@ -40,11 +45,36 @@ gameIdBtn?.addEventListener("click", async (event) => {
 	}
 });
 
-joinBtn?.addEventListener("click", async (event) => {
-	joinPanel?.showModal();
+joinBtn?.addEventListener("click", () => joinPanel?.showModal());
+
+joinForm?.addEventListener("submit", async (event) => {
+	event.preventDefault();
+	const enterBtn = event.target as HTMLButtonElement;
+	enterBtn.disabled = true;
+
+	setBusy(joinPanel!, true);
+	const gameId = new FormData(joinForm).get("code") as string;
+	try {
+		const sse = await joinGame(gameId, 1);
+		session.playerId = 1;
+		session.gameId = gameId;
+		session.sse = sse;
+
+		gameStatus!.textContent = "Game Joined";
+		joinBtn!.closest("div")!.hidden = true;
+
+		joinPanel?.close();
+		board.connected();
+	} catch (err) {
+		console.error("Failed to join", err);
+		joinStatus!.textContent = "Failed to join game. Try again";
+		enterBtn.disabled = false;
+	} finally {
+		setBusy(joinPanel!, false);
+	}
 });
 
-createBtn!.addEventListener("click", async (event) => {
+createBtn?.addEventListener("click", async (event) => {
 	const createBtn = event.currentTarget as HTMLButtonElement;
 	createPanel?.showModal();
 	if (session.gameId) {
@@ -53,8 +83,11 @@ createBtn!.addEventListener("click", async (event) => {
 	setBusy(createPanel!, true);
 	try {
 		const gameId = await createGame();
+		const sse = await joinGame(gameId, 0);
+
 		session.playerId = 0;
 		session.gameId = gameId;
+		session.sse = sse;
 
 		createStatus!.textContent = "Share the below code or click to copy";
 		gameStatus!.textContent = "Waiting for other player to join";
@@ -67,9 +100,9 @@ createBtn!.addEventListener("click", async (event) => {
 
 		board.connected();
 
-		console.log(`Created game: ${session}`);
+		console.log(`Created game: ${session.gameId}`);
 	} catch (err) {
-		console.error(`Failed to create game: ${err}`);
+		console.error("Failed to create game", err);
 		createStatus!.textContent = "Failed to create game :( Please try again";
 	} finally {
 		setBusy(createPanel!, false);

@@ -83,7 +83,7 @@ public class GameRoom {
 
         try {
             sendPlayerEvent(player, "sync",
-                    Map.of("board", board, "player_type", symbols.get(player), "player_turn", player == playerTurn));
+                    Map.of("board", board, "playerType", symbols.get(player), "playerTurn", player == playerTurn));
         } catch (Exception ex) {
             throw new RuntimeException("Failed to send game state " + board + " to player " + player, ex);
         }
