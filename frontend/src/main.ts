@@ -1,8 +1,9 @@
-import { createGame, joinGame } from "./api.ts";
-import board, { session } from "./board.ts";
+import { createGame, joinGame } from "./apis.ts";
+import board from "./board.ts";
+import { session } from "./models.ts";
 import "./styles/style.css";
 
-const gameStatus = document.querySelector<HTMLParagraphElement>(
+export const gameStatus = document.querySelector<HTMLParagraphElement>(
 	"header > .game-status",
 );
 const createPanel = document.querySelector<HTMLDialogElement>(".create-panel");
@@ -45,7 +46,11 @@ gameIdBtn?.addEventListener("click", async (event) => {
 	}
 });
 
-joinBtn?.addEventListener("click", () => joinPanel?.showModal());
+joinBtn?.addEventListener("click", () => {
+	joinStatus!.textContent = "Enter game code to join";
+	joinForm?.reset();
+	joinPanel?.showModal();
+});
 
 joinForm?.addEventListener("submit", async (event) => {
 	event.preventDefault();
@@ -65,6 +70,9 @@ joinForm?.addEventListener("submit", async (event) => {
 		joinBtn!.closest("div")!.hidden = true;
 
 		joinPanel?.close();
+
+		enterBtn.disabled = false;
+
 		board.connected();
 	} catch (err) {
 		console.error(err);
@@ -107,8 +115,32 @@ createBtn?.addEventListener("click", async (event) => {
 	} catch (err) {
 		console.error(err);
 		createStatus!.textContent = "Failed to create game :( Please try again";
+		gameIdBtn!.hidden = true;
 		board.setTurn(true);
 	} finally {
 		setBusy(createPanel!, false);
 	}
 });
+
+export function exitGame() {
+	session.sse!.close();
+	session.playerId = null;
+	session.gameId = null;
+	session.sse = null;
+	setTimeout(() => {
+		gameStatus!.textContent =
+			"Create or join a game to play with friends online";
+		createStatus!.textContent = "Creating game...";
+		joinStatus!.textContent = "Enter game code to join";
+		joinForm?.reset();
+
+		createBtn!.textContent = "Create";
+		joinBtn!.textContent = "Join";
+
+		gameIdBtn!.hidden = true;
+		createBtn!.hidden = false;
+		joinBtn!.hidden = false;
+		joinBtn!.closest("div")!.hidden = false;
+		board.disconnected();
+	}, 5000);
+}

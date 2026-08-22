@@ -21,13 +21,15 @@
 }
 
 .cell {
+	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
+	--cell-color: white;
 	background: var(--cell-bg);
 	cursor: pointer;
 	border: 2.5px solid;
 	border-radius: 4px;
 	box-shadow: none;
+	text-align: center;
 	font-size: var(--cell-content-size);
-	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
 	@media (hover: hover) {
 		&:hover {
 			background: var(--cell-dark-bg);
@@ -41,12 +43,21 @@
 		border-color: black;
 		cursor: not-allowed;
 	}
+	&.cell-x {
+		--cell-color: var(--color-x);
+	}
+	&.cell-o {
+		--cell-color: var(--color-o);
+	}
 	&.cell-x::before {
 		content: "X";
-		color: var(--color-x);
+		color: var(--cell-color);
 	}
 	&.cell-o::before {
 		content: "O";
-		color: var(--color-o);
+		color: var(--cell-color);
+	}
+	&.win {
+		background: color-mix(in oklab, var(--cell-color), black 50%);
 	}
 }
