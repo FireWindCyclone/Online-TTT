@@ -1,5 +1,6 @@
 button {
 	outline: none;
+	font-weight: bold;
 	transition: background-color 120ms ease;
 	&:focus-visible {
 		border-color: seashell;

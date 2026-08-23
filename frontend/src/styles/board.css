@@ -17,7 +17,7 @@
 	padding: 9px;
 	border: 2.5px solid;
 	border-radius: 8px;
-	box-shadow: 5px 5px 5px color-mix(in oklab, var(--bg), black 24%);
+	box-shadow: 4px 4px 4px color-mix(in oklab, var(--bg), black 24%);
 }
 
 .cell {
@@ -30,6 +30,7 @@
 	box-shadow: none;
 	text-align: center;
 	font-size: var(--cell-content-size);
+	line-height: 1;
 	@media (hover: hover) {
 		&:hover {
 			background: var(--cell-dark-bg);
