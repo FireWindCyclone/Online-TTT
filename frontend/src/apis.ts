@@ -29,6 +29,7 @@ export async function joinGame(
 			console.log(`Synced game: ${gameId}`);
 			resolve(sse);
 		});
+
 		sse.addEventListener("move", (event: MessageEvent) => {
 			const data: { pos: Pos; type: CellType } = JSON.parse(event.data);
 
@@ -37,35 +38,37 @@ export async function joinGame(
 			board.applyMove(posIndex.toIndex(data.pos), data.type);
 			board.setTurn(true);
 		});
-		sse.addEventListener("won-x", (event: MessageEvent) => {
-			const cells = JSON.parse(event.data);
-			console.log(`X won. Marking won cells ${cells}`);
-			board.win("X", cells);
+
+		sse.addEventListener("won", (event: MessageEvent) => {
+			const data: { type: CellType; cells: number[] } = JSON.parse(event.data);
+			console.log(`${data.type} won. Marking won cells ${data.cells}`);
+			board.win(data.type, data.cells);
 			exitGame();
 		});
-		sse.addEventListener("won-o", (event: MessageEvent) => {
-			const cells = JSON.parse(event.data);
-			console.log(`O won. Marking won cells ${cells}`);
-			board.win("O", cells);
-			exitGame();
-		});
+
 		sse.addEventListener("draw", () => {
 			console.log("Game Draws");
-			gameStatus!.textContent = "Its a draw";
+			gameStatus!.textContent = "It's a draw";
 			exitGame();
 		});
-		sse.addEventListener("player-connected", (event: MessageEvent) => {});
-		sse.addEventListener("player-disconnected", (event: MessageEvent) => {});
 
-		sse.onopen = () => console.log(`Player ${playerId} Connected`);
+		sse.addEventListener("player-connected", () => {
+			console.log("Other player connected");
+		});
+
+		sse.addEventListener("player-disconnected", () => {
+			console.log("Other player disconnected");
+		});
+
+		sse.onopen = () => console.log(`Player ${playerId} connected`);
 
 		sse.onerror = () => {
 			if (sse.readyState !== EventSource.CLOSED) {
-				console.warn("SSE Error. Reconnecting");
+				console.warn("SSE error. Reconnecting");
 				return;
 			}
 			if (hasSynced) {
-				console.log("Error. Exiting Game");
+				console.log("SSE connection error. Exiting game");
 				exitGame();
 			} else {
 				reject(new Error(`Failed to join game: ${gameId}`));
@@ -73,6 +76,7 @@ export async function joinGame(
 		};
 	});
 }
+
 export async function makeMove(pos: Pos): Promise<void> {
 	const res = await fetch(
 		`${API_URL}/games/${session.gameId}/move/${session.playerId}`,

@@ -21,7 +21,7 @@ const createBtn = document.querySelector<HTMLButtonElement>(".create-game");
 const joinBtn = document.querySelector<HTMLButtonElement>(".join-game");
 
 document.querySelectorAll<HTMLButtonElement>(".close").forEach((btn) => {
-	btn.addEventListener("click", (_) => btn.closest("dialog")?.close());
+	btn.addEventListener("click", () => btn.closest("dialog")?.close());
 });
 
 function setBusy(dialog: HTMLDialogElement, busy: boolean) {

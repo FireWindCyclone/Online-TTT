@@ -22,7 +22,7 @@ class Board {
 		this.cells.forEach((cell) => {
 			cell.addEventListener("click", this);
 		});
-		this.clearBtn?.addEventListener("click", (_) => this.resetCells());
+		this.clearBtn?.addEventListener("click", () => this.resetCells());
 	}
 
 	applyMove(idx: number, moveType: CellType) {
@@ -52,10 +52,12 @@ class Board {
 	}
 
 	syncBoard(data: SyncData) {
+		console.log("Syncing board");
 		this.playerType = data.playerType;
 		this.playerTurn = data.playerTurn;
 		for (const [i, c] of [...data.board].entries()) {
 			if (c !== "*") {
+				console.log(i, c);
 				this.applyMove(i, c as CellType);
 			}
 		}
@@ -71,7 +73,6 @@ class Board {
 	}
 
 	connected() {
-		this.resetCells();
 		this.online = true;
 		this.clearBtn.hidden = true;
 		this.playerTypeDisplay.hidden = false;
@@ -91,17 +92,18 @@ class Board {
 		const cell = event.currentTarget as HTMLButtonElement;
 		const idx = parseInt(cell.dataset.index!, 10);
 
-		this.applyMove(idx, this.playerType);
+		try {
+			if (this.online) {
+				await makeMove(posIndex.toPos(idx));
+				this.playerTurn = false;
+			}
+			this.applyMove(idx, this.playerType);
+		} catch (err) {
+			console.error(err);
+		}
 
 		if (!this.online) {
 			this.playerType = this.playerType === "X" ? "O" : "X";
-		} else {
-			try {
-				await makeMove(posIndex.toPos(idx));
-				this.playerTurn = false;
-			} catch (err) {
-				console.error(err);
-			}
 		}
 	}
 }

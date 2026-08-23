@@ -104,7 +104,7 @@ public class GameRoom {
     private SseEmitter sendPlayerEvent(Player player, String eventName, Object eventData) throws IOException {
         SseEmitter sse = getPlayerEmitter(player).orElseThrow();
         if (eventData == null) {
-            sse.send(SseEmitter.event().name(eventName));
+            sse.send(SseEmitter.event().name(eventName).data(Map.of()));
         } else {
             sse.send(SseEmitter.event().name(eventName).data(eventData));
         }
@@ -158,21 +158,20 @@ public class GameRoom {
     }
 
     public void makePlayerMove(Player player, PosDto pos) {
-        log.debug("Player {} making move {}", player, pos);
+        log.debug("Player {} {} making move {}", player, getPlayerSymbol(player), pos);
         ScoreDto newScore = scores.get(player).update(pos);
         scores.put(player, newScore);
 
-        syncPlayerMove(player.getOtherPlayer(), Map.of("pos", pos, "type", symbols.get(player)));
+        syncPlayerMove(player.getOtherPlayer(), Map.of("pos", pos, "type", getPlayerSymbol(player)));
 
         Optional<ScoreDto> winScore = newScore.match();
         winScore.ifPresent((score) -> {
-            log.info("Player {} won. Game over", player);
-            String winStatus = "won-" + Character.toLowerCase(symbols.get(player));
-            finishGame(winStatus, score.list());
+            log.info("Player {} {} won. Game over", player, getPlayerSymbol(player));
+            finishGame("won", Map.of("type", getPlayerSymbol(player), "cells", score.list()));
         });
 
         if (!gameOver && ScoreDto.combine(scores.get(Player.PLAYER_0), scores.get(Player.PLAYER_1)).isFull()) {
-            log.info("Player {} draws. Game over", player);
+            log.info("Player {} {} draws. Game over", player, getPlayerSymbol(player));
             finishGame("draw", null);
         }
     }
