@@ -21,7 +21,7 @@ public class GameRoom {
     private Instant updatedAt = Instant.now(); // only used in scheduler thread so not volatile
     private final Map<Player, ScoreDto> scores = new EnumMap<>(Player.class); // only used inside synchronized(room)
     private Player playerTurn; // only used inside synchronized(room)
-    private boolean gameOver = false; // only used inside synchronized(room)
+    private volatile boolean gameOver = false;
     private final Map<Player, Character> symbols;
 
     public GameRoom() {

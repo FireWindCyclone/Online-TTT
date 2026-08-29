@@ -7,14 +7,14 @@ import java.util.stream.IntStream;
 
 public record ScoreDto(int score) {
     private static final int[] WIN_SCORES = {
-            0b111000000, // r1
+            0b111000000, // r3
             0b000111000, // r2
-            0b000000111, // r3
-            0b100100100, // c1
+            0b000000111, // r1
+            0b100100100, // c3
             0b010010010, // c2
-            0b001001001, // c3
-            0b100010001, // d1
-            0b001010100, // d2
+            0b001001001, // c1
+            0b100010001, // d2
+            0b001010100, // d1
     };
 
     public ScoreDto update(PosDto pos) {

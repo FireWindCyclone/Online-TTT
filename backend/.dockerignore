@@ -1,0 +1,18 @@
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+.DS_Store
+
+README.md
+
+# Maven Build Output
+HELP.md
+target/
+
+# Gradle Build Output
+build/
+
+# Logs
+*.log
