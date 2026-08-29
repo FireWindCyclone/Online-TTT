@@ -1,28 +1,40 @@
 import { makeMove } from "./apis.ts";
-import { gameStatus } from "./main.ts";
+import { exitGame, gameStatus, qs } from "./main.ts";
 import type { CellType, SyncData } from "./models.ts";
 import { posIndex } from "./models.ts";
 
 class Board {
 	private readonly cells: NodeListOf<HTMLButtonElement> =
 		document.querySelectorAll<HTMLButtonElement>(".cell")!;
-	private readonly playerTypeDisplay =
-		document.querySelector<HTMLUListElement>(".player-type")!;
-	private readonly clearBtn: HTMLButtonElement =
-		document.querySelector(".reset-game")!;
+	private readonly playerTypeDisplay = qs<HTMLUListElement>(
+		document,
+		".player-type",
+	);
+	private readonly clearBtn: HTMLButtonElement = qs(document, ".reset-game");
 	private readonly CELL_CLASS: Record<CellType, string> = {
 		X: "cell-x",
 		O: "cell-o",
 	};
 	private playerType: CellType = "X";
 	private playerTurn: boolean = true;
-	private online: boolean = false;
+	private _online: boolean = false;
 
 	constructor() {
 		this.cells.forEach((cell) => {
 			cell.addEventListener("click", this);
 		});
 		this.clearBtn?.addEventListener("click", () => this.resetCells());
+	}
+
+	setMoveStatus() {
+		if (!this._online) {
+			return;
+		}
+		if (this.playerTurn) {
+			gameStatus.textContent = "Your turn. Make a move";
+		} else {
+			gameStatus.textContent = "Opponent turn. Awaiting their move";
+		}
 	}
 
 	applyMove(idx: number, moveType: CellType) {
@@ -36,50 +48,54 @@ class Board {
 			cell.disabled = false;
 		});
 	}
+
 	win(winType: CellType, winCells: number[]) {
 		for (const idx of winCells) {
 			this.cells[idx].classList.add("win");
 		}
 		if (winType === this.playerType) {
-			gameStatus!.textContent = "You Win!";
+			gameStatus.textContent = "You Win!";
 		} else {
-			gameStatus!.textContent = "You Lose :(";
+			gameStatus.textContent = "You Lose :(";
 		}
 	}
 
-	setTurn(turn: boolean) {
+	set turn(turn: boolean) {
 		this.playerTurn = turn;
+	}
+
+	set online(online: boolean) {
+		this._online = online;
 	}
 
 	syncBoard(data: SyncData) {
 		console.log("Syncing board");
-		this.playerType = data.playerType;
-		this.playerTurn = data.playerTurn;
+		this.resetCells();
 		for (const [i, c] of [...data.board].entries()) {
 			if (c !== "*") {
 				console.log(i, c);
 				this.applyMove(i, c as CellType);
 			}
 		}
+		this.playerType = data.playerType;
+		this.playerTurn = data.playerTurn;
+
 		if (this.playerType === "X") {
 			return;
 		}
-		this.playerTypeDisplay.querySelector(
-			".player-type>li:nth-child(1)",
-		)!.textContent = "You (O)";
-		this.playerTypeDisplay.querySelector(
-			".player-type>li:nth-child(2)",
-		)!.textContent = "Opponent (X)";
+
+		qs(this.playerTypeDisplay, ".player-type>li:first-child").textContent =
+			"You (O)";
+		qs(this.playerTypeDisplay, ".player-type>li:last-child").textContent =
+			"Opponent (X)";
 	}
 
 	connected() {
-		this.online = true;
 		this.clearBtn.hidden = true;
 		this.playerTypeDisplay.hidden = false;
 	}
 
 	disconnected() {
-		this.online = false;
 		this.clearBtn.hidden = false;
 		this.playerTypeDisplay.hidden = true;
 		this.playerTurn = true;
@@ -92,17 +108,17 @@ class Board {
 		const cell = event.currentTarget as HTMLButtonElement;
 		const idx = parseInt(cell.dataset.index!, 10);
 
-		try {
-			if (this.online) {
+		this.applyMove(idx, this.playerType);
+		if (this._online) {
+			this.playerTurn = false;
+			try {
 				await makeMove(posIndex.toPos(idx));
-				this.playerTurn = false;
+				this.setMoveStatus();
+			} catch (err) {
+				console.error(err);
+				exitGame();
 			}
-			this.applyMove(idx, this.playerType);
-		} catch (err) {
-			console.error(err);
-		}
-
-		if (!this.online) {
+		} else {
 			this.playerType = this.playerType === "X" ? "O" : "X";
 		}
 	}

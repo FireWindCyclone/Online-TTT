@@ -6,7 +6,10 @@ import { posIndex, session } from "./models.ts";
 const API_URL: string = import.meta.env.VITE_API_URL ?? "/api";
 
 export async function createGame(): Promise<string> {
-	const res = await fetch(`${API_URL}/games`, { method: "POST" });
+	const res = await fetch(`${API_URL}/games`, {
+		method: "POST",
+		signal: AbortSignal.timeout(10000),
+	});
 	if (!res.ok) {
 		throw new Error(`Failed to create game: ${res.status} ${await res.text()}`);
 	}
@@ -23,10 +26,12 @@ export async function joinGame(
 
 		sse.addEventListener("sync", (event: MessageEvent) => {
 			hasSynced = true;
+			board.online = true;
 			const data: SyncData = JSON.parse(event.data);
 			console.log(data);
 			board.syncBoard(data);
 			console.log(`Synced game: ${gameId}`);
+			board.setMoveStatus();
 			resolve(sse);
 		});
 
@@ -36,7 +41,8 @@ export async function joinGame(
 			console.log("Making move");
 			console.log(data);
 			board.applyMove(posIndex.toIndex(data.pos), data.type);
-			board.setTurn(true);
+			board.turn = true;
+			board.setMoveStatus();
 		});
 
 		sse.addEventListener("won", (event: MessageEvent) => {
@@ -48,7 +54,7 @@ export async function joinGame(
 
 		sse.addEventListener("draw", () => {
 			console.log("Game Draws");
-			gameStatus!.textContent = "It's a draw";
+			gameStatus.textContent = "It's a draw";
 			exitGame();
 		});
 

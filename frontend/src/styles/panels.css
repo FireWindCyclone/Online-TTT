@@ -1,11 +1,8 @@
 .create-panel {
 	--bg: var(--create-bg);
 	& > .game-id {
-		background: transparent;
+		--btn-bg: var(--bg);
 		box-shadow: none;
-		&:hover {
-			background: color-mix(in oklab, var(--bg), black 12%);
-		}
 	}
 }
 

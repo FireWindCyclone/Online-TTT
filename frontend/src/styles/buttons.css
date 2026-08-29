@@ -1,12 +1,14 @@
 button {
 	outline: none;
 	font-weight: bold;
-	transition: background-color 120ms ease;
+	transition:
+		background-color 60ms ease,
+		transform 60ms ease;
 	&:focus-visible {
 		border-color: seashell;
 	}
 	&:active {
-		transform: scale(0.97);
+		transform: scale(0.95);
 	}
 }
 .btn {
