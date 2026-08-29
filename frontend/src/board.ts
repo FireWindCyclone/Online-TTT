@@ -1,3 +1,4 @@
+import confetti from "@hiseb/confetti";
 import { makeMove } from "./apis.ts";
 import { exitGame, gameStatus, qs } from "./main.ts";
 import type { CellType, SyncData } from "./models.ts";
@@ -55,6 +56,7 @@ class Board {
 		}
 		if (winType === this.playerType) {
 			gameStatus.textContent = "You Win!";
+			confetti({ size: 2 });
 		} else {
 			gameStatus.textContent = "You Lose :(";
 		}
