@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.PosDto;
@@ -25,9 +26,11 @@ public class GameService {
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
     private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
+    private final TransactionTemplate transactionTemplate;
 
-    public GameService(GameRepository gameRepo) {
+    public GameService(GameRepository gameRepo, TransactionTemplate transactionTemplate) {
         this.gameRepo = gameRepo;
+        this.transactionTemplate = transactionTemplate;
     }
 
     public void makeMove(Long gameId, Player player, PosDto pos) {
@@ -38,21 +41,25 @@ public class GameService {
             }
             log.debug("Player {} turn. Making move", player);
 
-            BoardInfo boardInfo = gameRepo.findById(gameId)
-                    .orElseThrow(() -> new GameNotFoundException(
-                            "Can't make move. Game with ID " + gameId + " doesn't exist"));
+            transactionTemplate.executeWithoutResult(_ -> {
+                BoardInfo boardInfo = gameRepo.findById(gameId)
+                        .orElseThrow(() -> new GameNotFoundException(
+                                "Can't make move. Game with ID " + gameId + " doesn't exist"));
 
-            String board = boardInfo.getBoard();
-            if (board.charAt(pos.index()) != '*') {
-                throw new PlayerException(
-                        "Cannot mark position " + pos + " because its already filled in game " + gameId);
-            }
-            log.debug("Move {} is valid", pos);
+                String board = boardInfo.getBoard();
+                if (board.charAt(pos.index()) != '*') {
+                    throw new PlayerException(
+                            "Cannot mark position " + pos + " because its already filled in game " + gameId);
+                }
+                log.debug("Move {} is valid", pos);
 
-            char[] boardArr = board.toCharArray();
-            boardArr[pos.index()] = room.getPlayerSymbol(player);
-            boardInfo.setBoard(new String(boardArr));
-            gameRepo.save(boardInfo);
+                char[] boardArr = board.toCharArray();
+                boardArr[pos.index()] = room.getPlayerSymbol(player);
+                boardInfo.setBoard(new String(boardArr));
+                gameRepo.save(boardInfo);
+
+            });
+
             room.makePlayerMove(player, pos);
         }
     }

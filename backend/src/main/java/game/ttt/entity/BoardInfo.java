@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "BOARDS")
@@ -18,6 +19,10 @@ public class BoardInfo {
 
     @Column(name = "BOARD", nullable = false, length = 9)
     private String board = "*********";
+
+    @Version
+    @Column(name = "VERSION", nullable = false)
+    private Long version = 0L;
 
     public Long getId() {
         return id;

@@ -64,7 +64,7 @@ public class GameRoom {
     }
 
     public SseEmitter connectPlayer(Player player, String board) {
-        SseEmitter sse = new SseEmitter(300000L); // 5 minutes
+        SseEmitter sse = new SseEmitter(600000L); // 10 minutes
 
         sse.onCompletion(() -> {
             log.debug("Completed connection for player {}", player);
