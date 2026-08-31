@@ -1,5 +1,6 @@
 package game.ttt.service;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -25,7 +27,7 @@ public class GameService {
 
     private static final Logger log = LoggerFactory.getLogger(GameService.class);
     private final GameRepository gameRepo;
-    private final Map<Long, GameRoom> gameRooms = new ConcurrentHashMap<>();
+    private final Map<String, GameRoom> gameRooms = new ConcurrentHashMap<>();
     private final TransactionTemplate transactionTemplate;
 
     public GameService(GameRepository gameRepo, TransactionTemplate transactionTemplate) {
@@ -33,7 +35,7 @@ public class GameService {
         this.transactionTemplate = transactionTemplate;
     }
 
-    public void makeMove(Long gameId, Player player, PosDto pos) {
+    public void makeMove(String gameId, Player player, PosDto pos) {
         GameRoom room = getRoom(gameId);
         synchronized (room) {
             if (!room.isPlayerTurn(player)) {
@@ -64,7 +66,7 @@ public class GameService {
         }
     }
 
-    public SseEmitter createConnection(Long gameId, Player player) {
+    public SseEmitter createConnection(String gameId, Player player) {
         GameRoom room = getRoom(gameId);
         synchronized (room) {
             if (!room.canPlayerJoin(player)) {
@@ -74,7 +76,7 @@ public class GameService {
         }
     }
 
-    private GameRoom getRoom(Long gameId) {
+    private GameRoom getRoom(String gameId) {
         GameRoom room = gameRooms.get(gameId);
         if (room == null) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
@@ -83,13 +85,20 @@ public class GameService {
         return room;
     }
 
-    public Long createGameId() {
-        Long gameId = gameRepo.save(new BoardInfo()).getId();
+    public String createGameId() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder id = new StringBuilder();
+        SecureRandom rand = new SecureRandom();
+        for (int i = 0; i < 4; i++) {
+            id.append(chars.charAt(rand.nextInt(chars.length())));
+        }
+        String gameId = id.toString();
+        gameRepo.save(new BoardInfo(gameId));
         gameRooms.put(gameId, new GameRoom());
         return gameId;
     }
 
-    public String showGame(Long gameId, boolean multiLine) {
+    public String showGame(String gameId, boolean multiLine) {
         String board = gameRepo.findById(gameId)
                 .orElseThrow(
                         () -> new GameNotFoundException("Can't show game. Game with ID " + gameId + " doesn't exist"))
@@ -104,13 +113,23 @@ public class GameService {
     public void checkClientPresent() {
         gameRooms.entrySet().removeIf(entry -> {
             if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 60) {
-                log.debug("Removing Game {}", entry.getKey());
-                gameRepo.deleteById(entry.getKey()); // can throw
-                return true;
+                MDC.put("gameId", entry.getKey());
+                log.info("Removing game");
+                try {
+                    gameRepo.deleteById(entry.getKey());
+                    return true;
+                } catch (Exception ex) {
+                    log.debug("Failed to remove game");
+                } finally {
+                    MDC.remove("gameId");
+                }
             }
             return false;
         });
-        gameRooms.forEach((_, room) -> room.pingPlayers());
+        gameRooms.forEach((gameId, room) -> {
+            MDC.put("gameId", gameId);
+            room.pingPlayers();
+            MDC.remove("gameId");
+        });
     }
-
 }

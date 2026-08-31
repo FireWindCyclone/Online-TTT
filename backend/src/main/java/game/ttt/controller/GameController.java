@@ -28,24 +28,24 @@ public class GameController {
     }
 
     @GetMapping("/games/{gameId}")
-    public ResponseEntity<String> showGame(@PathVariable Long gameId) {
+    public ResponseEntity<String> showGame(@PathVariable String gameId) {
         String board = gameService.showGame(gameId, true);
         return ResponseEntity.ok(board);
     }
 
     @PostMapping("/games")
-    public ResponseEntity<Long> createGame() {
-        Long gameId = gameService.createGameId();
-        MDC.put("gameId", gameId.toString());
+    public ResponseEntity<String> createGame() {
+        String gameId = gameService.createGameId();
+        MDC.put("gameId", gameId);
         log.info("Player {} created", Player.PLAYER_0);
         MDC.remove("gameId");
         return ResponseEntity.status(HttpStatus.CREATED).body(gameId);
     }
 
     @PostMapping("/games/{gameId}/move/{playerId}")
-    public ResponseEntity<Void> playerMove(@PathVariable Long gameId, @PathVariable Integer playerId,
+    public ResponseEntity<Void> playerMove(@PathVariable String gameId, @PathVariable Integer playerId,
             @RequestBody PosDto pos) {
-        MDC.put("gameId", gameId.toString());
+        MDC.put("gameId", gameId);
         try {
 
             Player player = Player.fromId(playerId);
@@ -58,8 +58,8 @@ public class GameController {
     }
 
     @GetMapping("/games/{gameId}/join/{playerId}")
-    public ResponseEntity<SseEmitter> joinGame(@PathVariable Long gameId, @PathVariable Integer playerId) {
-        MDC.put("gameId", gameId.toString());
+    public ResponseEntity<SseEmitter> joinGame(@PathVariable String gameId, @PathVariable Integer playerId) {
+        MDC.put("gameId", gameId);
         try {
 
             Player player = Player.fromId(playerId);

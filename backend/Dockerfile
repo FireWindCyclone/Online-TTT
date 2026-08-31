@@ -22,7 +22,6 @@ ENV JAVA_OPTS="\
     -Xmx256m \
     -XX:+UseG1GC \
     -XX:MaxGCPauseMillis=100 \
-    -XX:+UseStringDeduplication \
     -XX:MaxMetaspaceSize=128m"
 
 EXPOSE 8080
