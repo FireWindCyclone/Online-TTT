@@ -21,9 +21,7 @@
 }
 
 .cell {
-	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
-	--cell-color: white;
-	background: var(--cell-bg);
+	--btn-bg: var(--cell-bg);
 	cursor: pointer;
 	border: 2.5px solid;
 	border-radius: 4px;
@@ -31,18 +29,16 @@
 	text-align: center;
 	font-size: var(--cell-content-size);
 	line-height: 1;
+	--cell-dark-bg: color-mix(in oklab, var(--cell-bg), black 12%);
+	--cell-color: black;
 	@media (hover: hover) {
 		&:hover {
-			background: var(--cell-dark-bg);
+			--btn-bg: var(--cell-dark-bg);
 		}
 	}
-	&:active {
-		background: var(--cell-dark-bg);
-	}
-	&:disabled {
-		background: var(--cell-dark-bg);
-		border-color: black;
-		cursor: not-allowed;
+	&:active,
+	&.filled {
+		--btn-bg: var(--cell-dark-bg);
 	}
 	&.cell-x {
 		--cell-color: var(--color-x);
@@ -59,6 +55,6 @@
 		color: var(--cell-color);
 	}
 	&.win {
-		background: color-mix(in oklab, var(--cell-color), black 50%);
+		--btn-bg: color-mix(in oklab, var(--cell-color), black 50%);
 	}
 }

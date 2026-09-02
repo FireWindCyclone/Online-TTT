@@ -39,14 +39,14 @@ class Board {
 	}
 
 	applyMove(idx: number, moveType: CellType) {
-		this.cells[idx].classList.add(this.CELL_CLASS[moveType]);
-		this.cells[idx].disabled = true;
+		this.cells[idx].classList.add(this.CELL_CLASS[moveType], "filled");
+		this.cells[idx].setAttribute("aria-disabled", "true");
 	}
 
 	resetCells() {
 		this.cells.forEach((cell) => {
 			cell.className = "cell";
-			cell.disabled = false;
+			cell.removeAttribute("aria-disabled");
 		});
 	}
 
@@ -104,10 +104,10 @@ class Board {
 	}
 
 	async handleEvent(event: Event) {
-		if (!this.playerTurn) {
+		const cell = event.currentTarget as HTMLButtonElement;
+		if (!this.playerTurn || cell.getAttribute("aria-disabled") === "true") {
 			return;
 		}
-		const cell = event.currentTarget as HTMLButtonElement;
 		const idx = parseInt(cell.dataset.index!, 10);
 
 		this.applyMove(idx, this.playerType);

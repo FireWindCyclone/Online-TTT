@@ -1,4 +1,6 @@
 button {
+	--btn-bg: white;
+	background: var(--btn-bg);
 	outline: none;
 	font-weight: bold;
 	transition:
@@ -10,10 +12,13 @@ button {
 	&:active {
 		transform: scale(0.95);
 	}
+	&:disabled,
+	&[aria-disabled="true"] {
+		cursor: not-allowed;
+		border-color: black;
+	}
 }
 .btn {
-	--btn-bg: white;
-	background: var(--btn-bg);
 	width: calc(var(--title-size) * 3);
 	height: 35px;
 	cursor: pointer;
@@ -26,11 +31,9 @@ button {
 		background: color-mix(in oklab, var(--btn-bg), black 24%);
 	}
 	&:disabled {
-		box-shadow: none;
 		background: color-mix(in oklab, var(--btn-bg), black 24%);
+		box-shadow: none;
 		color: black;
-		border-color: black;
-		cursor: not-allowed;
 	}
 }
 
