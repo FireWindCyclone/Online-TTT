@@ -1,15 +1,9 @@
-import { createGame, joinGame } from "./apis.ts";
-import board from "./board.ts";
-import { session } from "./models.ts";
+import { createGame, joinGame } from "./apis";
+import board from "./board";
+import { session } from "./models";
 import "./styles/style.css";
-
-export function qs<T extends Element>(parent: ParentNode, sel: string): T {
-	const el = parent.querySelector<T>(sel);
-	if (!el) {
-		throw new Error(`Missing element: ${sel}`);
-	}
-	return el;
-}
+import showToast from "./toasts";
+import { qs, setBusy } from "./utils";
 
 export const gameStatus = qs<HTMLParagraphElement>(
 	document,
@@ -30,19 +24,6 @@ const joinBtn = qs<HTMLButtonElement>(document, ".join-game");
 document.querySelectorAll<HTMLButtonElement>(".close").forEach((btn) => {
 	btn.addEventListener("click", () => btn.closest("dialog")?.close());
 });
-
-function setBusy(dialog: HTMLDialogElement, busy: boolean) {
-	const closeBtn = qs<HTMLButtonElement>(dialog, ".close");
-	closeBtn.disabled = busy;
-
-	if (busy) {
-		dialog.setAttribute("closedby", "none");
-		dialog.setAttribute("aria-busy", "true");
-	} else {
-		dialog.removeAttribute("closedby");
-		dialog.removeAttribute("aria-busy");
-	}
-}
 
 gameIdBtn?.addEventListener("click", async (event) => {
 	const gameIdBtn = event.currentTarget as HTMLButtonElement;
@@ -69,7 +50,7 @@ joinForm?.addEventListener("submit", async (event) => {
 	joinStatus.textContent = "Joining game...";
 
 	setBusy(joinPanel, true);
-	const gameId = new FormData(joinForm).get("code") as string;
+	const gameId = (new FormData(joinForm).get("code") as string).toUpperCase();
 	try {
 		board.turn = false;
 		const sse = await joinGame(gameId, 1);
@@ -84,6 +65,8 @@ joinForm?.addEventListener("submit", async (event) => {
 		enterBtn.disabled = false;
 
 		board.connected();
+
+		showToast("Game joined");
 	} catch (err) {
 		console.error(err);
 		joinStatus.textContent = "Failed to join game. Try again";
@@ -123,6 +106,7 @@ createBtn?.addEventListener("click", async (event) => {
 
 		board.connected();
 
+		showToast("Waiting for other player to join");
 		console.log(`Created game: ${session.gameId}`);
 	} catch (err) {
 		console.error(err);
@@ -141,6 +125,7 @@ export function exitGame() {
 	session.gameId = null;
 	session.sse = null;
 	board.online = false;
+	showToast("Exiting game");
 	setTimeout(() => {
 		gameStatus.textContent =
 			"Create or join a game to play with friends online";

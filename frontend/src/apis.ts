@@ -1,7 +1,9 @@
-import board from "./board.ts";
-import { exitGame, gameStatus } from "./main.ts";
-import type { CellType, PlayerId, Pos, SyncData } from "./models.ts";
-import { posIndex, session } from "./models.ts";
+import board from "./board";
+import { exitGame, gameStatus } from "./main";
+import type { CellType, PlayerId, Pos, SyncData } from "./models";
+import { session } from "./models";
+import showToast from "./toasts";
+import { posIndex } from "./utils";
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -59,10 +61,12 @@ export async function joinGame(
 		});
 
 		sse.addEventListener("player-connected", () => {
+			showToast("Other player connected");
 			console.log("Other player connected");
 		});
 
 		sse.addEventListener("player-disconnected", () => {
+			showToast("Other player disconnected");
 			console.log("Other player disconnected");
 		});
 

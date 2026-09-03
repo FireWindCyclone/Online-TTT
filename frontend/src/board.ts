@@ -1,8 +1,9 @@
 import confetti from "@hiseb/confetti";
-import { makeMove } from "./apis.ts";
-import { exitGame, gameStatus, qs } from "./main.ts";
-import type { CellType, SyncData } from "./models.ts";
-import { posIndex } from "./models.ts";
+import { makeMove } from "./apis";
+import { exitGame, gameStatus } from "./main";
+import type { CellType, SyncData } from "./models";
+import showToast from "./toasts";
+import { posIndex, qs } from "./utils";
 
 class Board {
 	private readonly cells: NodeListOf<HTMLButtonElement> =
@@ -28,9 +29,8 @@ class Board {
 	}
 
 	setMoveStatus() {
-		if (!this._online) {
-			return;
-		}
+		if (!this._online) return;
+
 		if (this.playerTurn) {
 			gameStatus.textContent = "Your turn. Make a move";
 		} else {
@@ -82,14 +82,10 @@ class Board {
 		this.playerType = data.playerType;
 		this.playerTurn = data.playerTurn;
 
-		if (this.playerType === "X") {
-			return;
-		}
+		if (this.playerType === "X") return;
 
-		qs(this.playerTypeDisplay, ".player-type>li:first-child").textContent =
-			"You (O)";
-		qs(this.playerTypeDisplay, ".player-type>li:last-child").textContent =
-			"Opponent (X)";
+		this.playerTypeDisplay.firstElementChild!.textContent = "You (O)";
+		this.playerTypeDisplay.lastElementChild!.textContent = "Opponent (X)";
 	}
 
 	connected() {
@@ -105,7 +101,9 @@ class Board {
 
 	async handleEvent(event: Event) {
 		const cell = event.currentTarget as HTMLButtonElement;
-		if (!this.playerTurn || cell.getAttribute("aria-disabled") === "true") {
+		if (cell.getAttribute("aria-disabled") === "true") return;
+		if (!this.playerTurn) {
+			showToast("Not your turn");
 			return;
 		}
 		const idx = parseInt(cell.dataset.index!, 10);
@@ -118,6 +116,7 @@ class Board {
 				this.setMoveStatus();
 			} catch (err) {
 				console.error(err);
+				showToast("Something went wrong");
 				exitGame();
 			}
 		} else {
