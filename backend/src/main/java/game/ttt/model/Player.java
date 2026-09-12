@@ -6,13 +6,4 @@ public enum Player {
     public Player getOtherPlayer() {
         return this == PLAYER_0 ? PLAYER_1 : PLAYER_0;
     };
-
-    public static Player fromId(Integer playerId) {
-        return switch (playerId) {
-            case 0 -> PLAYER_0;
-            case 1 -> PLAYER_1;
-            default -> throw new IllegalArgumentException("Invalid player");
-        };
-
-    }
 }

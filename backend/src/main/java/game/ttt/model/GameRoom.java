@@ -13,16 +13,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import game.ttt.dto.PosDto;
 import game.ttt.dto.ScoreDto;
+import game.ttt.exception.PlayerException;
 
 public class GameRoom {
     private static final Logger log = LoggerFactory.getLogger(GameRoom.class);
     private volatile Optional<SseEmitter> player0 = Optional.empty();
     private volatile Optional<SseEmitter> player1 = Optional.empty();
-    private Instant updatedAt = Instant.now(); // only used in scheduler thread so not volatile
+    private Instant createdAt = Instant.now(); // only used in scheduler thread so not volatile
     private final Map<Player, ScoreDto> scores = new EnumMap<>(Player.class); // only used inside synchronized(room)
     private Player playerTurn; // only used inside synchronized(room)
     private volatile boolean gameOver = false;
     private final Map<Player, Character> symbols;
+    private final Map<Player, String> sessions = new EnumMap<>(Player.class); // only used inside synchronized
 
     public GameRoom() {
         scores.put(Player.PLAYER_0, new ScoreDto(0));
@@ -46,7 +48,6 @@ public class GameRoom {
     }
 
     private void disconnectPlayer(Player player) {
-        setPlayerEmitter(player, null);
         log.debug("Player {} disconnected", player);
 
         if (!gameOver) {
@@ -63,7 +64,11 @@ public class GameRoom {
         }
     }
 
-    public SseEmitter connectPlayer(Player player, String board) {
+    public synchronized SseEmitter connectPlayer(String sessionId, Player player, String board) {
+        if (!sessions.computeIfAbsent(player, _ -> sessionId).equals(sessionId)) {
+            throw new PlayerException("Player " + player + "can't join. Game already full");
+        }
+
         SseEmitter sse = new SseEmitter(600000L); // 10 minutes
 
         sse.onCompletion(() -> {
@@ -77,13 +82,14 @@ public class GameRoom {
             log.warn("Timed out connection for player {}", player);
         });
 
+        getPlayerEmitter(player).ifPresent(emitter -> emitter.complete());
         setPlayerEmitter(player, sse);
 
         log.debug("Player {} sse created. Syncing initial game state {}", player, board);
 
         try {
             sendPlayerEvent(player, "sync",
-                    Map.of("board", board, "playerType", symbols.get(player), "playerTurn", player == playerTurn));
+                    Map.of("board", board, "playerType", getPlayerSymbol(player), "playerTurn", player == playerTurn));
         } catch (Exception ex) {
             throw new RuntimeException("Failed to send game state " + board + " to player " + player, ex);
         }
@@ -115,13 +121,6 @@ public class GameRoom {
         return playerTurn == player;
     }
 
-    public boolean canPlayerJoin(Player player) {
-        return switch (player) {
-            case PLAYER_0 -> player0.isEmpty();
-            case PLAYER_1 -> player0.isPresent() && player1.isEmpty();
-        };
-    }
-
     public void pingPlayers() {
         log.debug("Pinging players");
         pingPlayer(Player.PLAYER_0);
@@ -132,17 +131,20 @@ public class GameRoom {
         try {
             SseEmitter sse = getPlayerEmitter(player).orElseThrow();
             sse.send(SseEmitter.event().comment("ping"));
-            updatedAt = Instant.now();
         } catch (Exception ex) {
             log.warn("Failed to ping player {}: {}", player, ex.getMessage());
         }
     }
 
-    public Instant getLastRoomUpdate() {
-        return updatedAt;
+    public boolean isFinished() {
+        return gameOver;
     }
 
-    private void finishGame(String eventName, Object eventData) {
+    public Instant getRoomCreationTime() {
+        return createdAt;
+    }
+
+    public void finishGame(String eventName, Object eventData) {
         gameOver = true;
         sendGameOver(Player.PLAYER_0, eventName, eventData);
         sendGameOver(Player.PLAYER_1, eventName, eventData);
@@ -152,6 +154,7 @@ public class GameRoom {
         log.debug("Sending game over event {} to player {}", eventName, player);
         try {
             sendPlayerEvent(player, eventName, eventData).complete();
+            setPlayerEmitter(player, null);
         } catch (Exception ex) {
             log.debug("Failed to send game over event {} to player {}: {}", eventName, player, ex.getMessage());
         }

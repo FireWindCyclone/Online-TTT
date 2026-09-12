@@ -1,15 +1,18 @@
 export type PlayerId = 0 | 1;
 
 export type Session = {
-	playerId: PlayerId | null;
 	gameId: string | null;
 	sse: EventSource | null;
+	reset: () => void;
 };
 
 export const session: Session = {
-	playerId: null,
 	gameId: null,
 	sse: null,
+	reset() {
+		this.gameId = null;
+		this.sse = null;
+	},
 };
 
 export type CellType = "X" | "O";

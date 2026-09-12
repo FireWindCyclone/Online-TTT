@@ -1,7 +1,7 @@
 import confetti from "@hiseb/confetti";
-import { makeMove } from "./apis";
-import { exitGame, gameStatus } from "./main";
-import type { CellType, SyncData } from "./models";
+import { joinGame, makeMove } from "./apis";
+import { gameStatus } from "./main";
+import { type CellType, type SyncData, session } from "./models";
 import showToast from "./toasts";
 import { posIndex, qs } from "./utils";
 
@@ -43,11 +43,13 @@ class Board {
 		this.cells[idx].setAttribute("aria-disabled", "true");
 	}
 
-	resetCells() {
-		this.cells.forEach((cell) => {
-			cell.className = "cell";
-			cell.removeAttribute("aria-disabled");
-		});
+	private resetCells() {
+		this.cells.forEach(this.resetCell);
+	}
+
+	private resetCell(cell: HTMLButtonElement) {
+		cell.className = "cell";
+		cell.removeAttribute("aria-disabled");
 	}
 
 	win(winType: CellType, winCells: number[]) {
@@ -116,8 +118,9 @@ class Board {
 				this.setMoveStatus();
 			} catch (err) {
 				console.error(err);
-				showToast("Something went wrong");
-				exitGame();
+				session.sse = await joinGame();
+				showToast("Something went wrong. Try again");
+				this.resetCell(this.cells[idx]);
 			}
 		} else {
 			this.playerType = this.playerType === "X" ? "O" : "X";

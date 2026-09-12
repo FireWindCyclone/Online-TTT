@@ -53,10 +53,8 @@ joinForm?.addEventListener("submit", async (event) => {
 	const gameId = (new FormData(joinForm).get("code") as string).toUpperCase();
 	try {
 		board.turn = false;
-		const sse = await joinGame(gameId, 1);
-		session.playerId = 1;
 		session.gameId = gameId;
-		session.sse = sse;
+		session.sse = await joinGame(gameId);
 
 		joinBtn.closest("div")!.hidden = true;
 
@@ -72,6 +70,7 @@ joinForm?.addEventListener("submit", async (event) => {
 		joinStatus.textContent = "Failed to join game. Try again";
 		enterBtn.disabled = false;
 		board.turn = true;
+		session.reset();
 	} finally {
 		setBusy(joinPanel, false);
 	}
@@ -90,11 +89,8 @@ createBtn?.addEventListener("click", async (event) => {
 	try {
 		board.turn = false;
 		const gameId = await createGame();
-		const sse = await joinGame(gameId, 0);
-
-		session.playerId = 0;
 		session.gameId = gameId;
-		session.sse = sse;
+		session.sse = await joinGame();
 
 		createStatus.textContent = "Share the below code or click to copy";
 		createBtn.textContent = "Share Code";
@@ -106,7 +102,7 @@ createBtn?.addEventListener("click", async (event) => {
 
 		board.connected();
 
-		showToast("Waiting for other player to join");
+		showToast("Waiting for other player to join"); // NOTE: currently not dismissable above the dialog
 		console.log(`Created game: ${session.gameId}`);
 	} catch (err) {
 		console.error(err);
@@ -114,6 +110,7 @@ createBtn?.addEventListener("click", async (event) => {
 			"Failed to create game. Please try again after 1 min";
 		gameIdBtn.hidden = true;
 		board.turn = true;
+		session.reset();
 	} finally {
 		setBusy(createPanel, false);
 	}
@@ -121,9 +118,7 @@ createBtn?.addEventListener("click", async (event) => {
 
 export function exitGame() {
 	session.sse!.close();
-	session.playerId = null;
-	session.gameId = null;
-	session.sse = null;
+	session.reset();
 	board.online = false;
 	showToast("Exiting game");
 	setTimeout(() => {

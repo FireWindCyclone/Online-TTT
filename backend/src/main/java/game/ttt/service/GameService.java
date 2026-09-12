@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import game.ttt.dto.PlayerSession;
 import game.ttt.dto.PosDto;
 import game.ttt.entity.BoardInfo;
 import game.ttt.exception.PlayerException;
@@ -66,19 +67,14 @@ public class GameService {
         }
     }
 
-    public SseEmitter createConnection(String gameId, Player player) {
-        GameRoom room = getRoom(gameId);
-        synchronized (room) {
-            if (!room.canPlayerJoin(player)) {
-                throw new PlayerException("Player " + player + " can't join game " + gameId);
-            }
-            return room.connectPlayer(player, showGame(gameId, false));
-        }
+    public SseEmitter createConnection(PlayerSession session, String sessionId) {
+        GameRoom room = getRoom(session.gameId());
+        return room.connectPlayer(sessionId, session.playerId(), showGame(session.gameId(), false));
     }
 
     private GameRoom getRoom(String gameId) {
         GameRoom room = gameRooms.get(gameId);
-        if (room == null) {
+        if (room == null || room.isFinished()) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
         }
         log.debug("Game room exists");
@@ -112,9 +108,11 @@ public class GameService {
     @Scheduled(fixedRate = 15000)
     public void checkClientPresent() {
         gameRooms.entrySet().removeIf(entry -> {
-            if (Duration.between(entry.getValue().getLastRoomUpdate(), Instant.now()).toSeconds() > 60) {
+            GameRoom room = entry.getValue();
+            if (room.isFinished() || Duration.between(room.getRoomCreationTime(), Instant.now()).toMinutes() > 10) {
                 MDC.put("gameId", entry.getKey());
                 log.info("Removing game");
+                room.finishGame("exit", null);
                 try {
                     gameRepo.deleteById(entry.getKey());
                     return true;
