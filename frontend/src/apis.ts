@@ -5,12 +5,13 @@ import showToast from "./toasts";
 import { posIndex } from "./utils";
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? "/api";
+const API_TIMEOUT = 7000;
 
 export async function createGame(): Promise<string> {
 	const res = await fetch(`${API_URL}/games`, {
 		method: "POST",
 		credentials: "include",
-		signal: AbortSignal.timeout(7000),
+		signal: AbortSignal.timeout(API_TIMEOUT),
 	});
 	if (!res.ok) {
 		throw new Error(`Failed to create game: ${res.status} ${await res.text()}`);
@@ -28,8 +29,13 @@ export async function joinGame(gameId?: string): Promise<EventSource> {
 		const sse = new EventSource(url, {
 			withCredentials: true,
 		});
-		let hasSynced = false;
 
+		const handle = setTimeout(() => {
+			sse.close();
+			reject(new Error(`Failed to join game: ${session.gameId}`));
+		}, API_TIMEOUT);
+
+		let hasSynced = false;
 		sse.addEventListener("sync", (event: MessageEvent) => {
 			hasSynced = true;
 			board.online = true;
@@ -74,7 +80,10 @@ export async function joinGame(gameId?: string): Promise<EventSource> {
 			console.log("Other player disconnected");
 		});
 
-		sse.onopen = () => console.log("Player connected");
+		sse.onopen = () => {
+			clearTimeout(handle);
+			console.log("Player connected");
+		};
 
 		sse.onerror = async () => {
 			if (sse.readyState !== EventSource.CLOSED) {
