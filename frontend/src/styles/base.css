@@ -29,15 +29,15 @@
 }
 
 body {
-	min-height: 100dvh;
+	min-height: 100svh;
 	gap: calc(var(--container-spacing));
 	font-family: "GameFont", fantasy;
 	background: var(--bg);
 }
 
 header {
-	gap: var(--container-spacing);
-	padding-top: calc(var(--container-spacing));
+	gap: calc(var(--container-spacing) * 0.7);
+	padding-top: calc(var(--container-spacing) * 0.5);
 	& > h1 {
 		font-size: var(--title-size);
 	}
@@ -66,7 +66,7 @@ dialog {
 
 dialog,
 form {
-	gap: calc(var(--container-spacing));
+	gap: calc(var(--container-spacing) * 0.7);
 }
 
 .game-status {

@@ -1,5 +1,8 @@
 .player-type {
 	list-style: none;
+	& li {
+		font-size: calc(var(--title-size) * 0.4);
+	}
 	& li:first-child {
 		background: var(--color-x);
 	}
@@ -13,8 +16,9 @@
 	grid-template-columns: repeat(3, var(--cell-size));
 	grid-template-rows: repeat(3, var(--cell-size));
 	background: var(--board-bg);
-	gap: calc(var(--title-size) * 0.2);
-	padding: 9px;
+	--line-size: calc(var(--title-size) * 0.2);
+	gap: var(--line-size);
+	padding: var(--line-size);
 	border: 2.5px solid;
 	border-radius: 8px;
 	box-shadow: 4px 4px 4px color-mix(in oklab, var(--bg), black 24%);

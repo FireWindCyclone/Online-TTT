@@ -18,9 +18,11 @@ button {
 		border-color: black;
 	}
 }
+
 .btn {
 	width: calc(var(--title-size) * 3);
-	height: 35px;
+	height: calc(var(--title-size) * 0.8);
+	font-size: calc(var(--title-size) * 0.35);
 	cursor: pointer;
 	@media (hover: hover) {
 		&:hover {
@@ -50,13 +52,6 @@ button {
 	--btn-bg: var(--reset-bg);
 }
 
-.code-input,
-dialog .btn {
-	font-size: calc(var(--title-size) * 0.5);
-	width: calc(var(--title-size) * 5);
-	height: 50px;
-}
-
 .btn,
 .code-input,
 .player-type li {
@@ -64,4 +59,11 @@ dialog .btn {
 	padding: 2px;
 	border-radius: 4px;
 	box-shadow: 2px 2px 2px color-mix(in oklab, var(--bg), black 24%);
+}
+
+.code-input,
+dialog .btn {
+	font-size: calc(var(--title-size) * 0.5);
+	width: calc(var(--title-size) * 5);
+	height: calc(var(--title-size) * 1.1);
 }

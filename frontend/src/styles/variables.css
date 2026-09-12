@@ -8,8 +8,8 @@
 	--join-bg: oklch(0.75 0.174 29.047);
 	--reset-bg: oklch(0.75 0.066 27.292);
 	--toast-bg: oklch(0.7 0.03 70.71);
-	--cell-size: 6rem;
-	--title-size: 3rem;
-	--container-spacing: 5vh;
-	--cell-content-size: 5rem;
+	--title-size: clamp(2rem, 14svh, 1.5rem + 3svh);
+	--container-spacing: clamp(2rem, 5svh + 2vw, 5rem);
+	--cell-size: calc(var(--title-size) * 2);
+	--cell-content-size: calc(var(--cell-size) * 0.9);
 }

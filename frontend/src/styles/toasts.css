@@ -17,7 +17,7 @@
 	border-radius: 4px;
 	line-height: 1;
 	padding: 10px;
-	font-size: calc(var(--title-size) * 0.3);
+	font-size: calc(var(--title-size) * 0.4);
 	font-weight: bold;
 	text-align: center;
 	animation: toast-in 150ms ease;
