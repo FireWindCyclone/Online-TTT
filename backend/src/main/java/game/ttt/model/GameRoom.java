@@ -20,8 +20,9 @@ public class GameRoom {
     private volatile Optional<SseEmitter> player0 = Optional.empty();
     private volatile Optional<SseEmitter> player1 = Optional.empty();
     private Instant createdAt = Instant.now(); // only used in scheduler thread so not volatile
+    private Instant endAt; // only used in scheduler thread so not volatile
     private final Map<Player, ScoreDto> scores = new EnumMap<>(Player.class); // only used inside synchronized(room)
-    private Player playerTurn; // only used inside synchronized(room)
+    private volatile Player playerTurn;
     private volatile boolean gameOver = false;
     private final Map<Player, Character> symbols;
     private final Map<Player, String> sessions = new EnumMap<>(Player.class); // only used inside synchronized
@@ -89,7 +90,8 @@ public class GameRoom {
 
         try {
             sendPlayerEvent(player, "sync",
-                    Map.of("board", board, "playerType", getPlayerSymbol(player), "playerTurn", player == playerTurn));
+                    Map.of("board", board, "playerType", getPlayerSymbol(player), "playerTurn", player == playerTurn,
+                            "gameOver", gameOver));
         } catch (Exception ex) {
             throw new RuntimeException("Failed to send game state " + board + " to player " + player, ex);
         }
@@ -136,8 +138,8 @@ public class GameRoom {
         }
     }
 
-    public boolean isFinished() {
-        return gameOver;
+    public Instant getRoomEndTime() {
+        return (endAt == null) ? Instant.now() : endAt;
     }
 
     public Instant getRoomCreationTime() {
@@ -146,6 +148,7 @@ public class GameRoom {
 
     public void finishGame(String eventName, Object eventData) {
         gameOver = true;
+        endAt = Instant.now();
         sendGameOver(Player.PLAYER_0, eventName, eventData);
         sendGameOver(Player.PLAYER_1, eventName, eventData);
     }

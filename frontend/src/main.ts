@@ -138,3 +138,16 @@ export function exitGame() {
 		board.disconnected();
 	}, 5000);
 }
+
+document.addEventListener("visibilitychange", async () => {
+	if (session.sse && !document.hidden) {
+		session.sse.close();
+		try {
+			session.sse = await joinGame();
+		} catch (err) {
+			console.error(err);
+			showToast("Game completed");
+			exitGame();
+		}
+	}
+});

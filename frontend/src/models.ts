@@ -21,6 +21,7 @@ export type SyncData = {
 	board: string;
 	playerType: CellType;
 	playerTurn: boolean;
+	gameOver: boolean;
 };
 
 export type Pos = {

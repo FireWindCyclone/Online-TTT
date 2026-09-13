@@ -35,16 +35,16 @@ export async function joinGame(gameId?: string): Promise<EventSource> {
 			reject(new Error(`Failed to join game: ${session.gameId}`));
 		}, API_TIMEOUT);
 
-		let hasSynced = false;
 		sse.addEventListener("sync", (event: MessageEvent) => {
-			hasSynced = true;
 			board.online = true;
 			const data: SyncData = JSON.parse(event.data);
 			console.log(data);
 			board.syncBoard(data);
 			console.log(`Synced game: ${session.gameId}`);
 			board.setMoveStatus();
-			resolve(sse);
+			data.gameOver
+				? reject(`Game: ${session.gameId} already completed`)
+				: resolve(sse);
 		});
 
 		sse.addEventListener("move", (event: MessageEvent) => {
@@ -90,12 +90,7 @@ export async function joinGame(gameId?: string): Promise<EventSource> {
 				console.warn("SSE error. Reconnecting");
 				return;
 			}
-			if (hasSynced) {
-				console.log("SSE connection error. Reconnecting manually");
-				session.sse = await joinGame();
-			} else {
-				reject(new Error(`Failed to join game: ${gameId}`));
-			}
+			reject(new Error(`Failed to join game: ${gameId}`));
 		};
 	});
 }

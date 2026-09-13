@@ -74,7 +74,7 @@ public class GameService {
 
     private GameRoom getRoom(String gameId) {
         GameRoom room = gameRooms.get(gameId);
-        if (room == null || room.isFinished()) {
+        if (room == null) {
             throw new GameNotFoundException("Game with ID " + gameId + " doesn't exist");
         }
         log.debug("Game room exists");
@@ -109,10 +109,10 @@ public class GameService {
     public void checkClientPresent() {
         gameRooms.entrySet().removeIf(entry -> {
             GameRoom room = entry.getValue();
-            if (room.isFinished() || Duration.between(room.getRoomCreationTime(), Instant.now()).toMinutes() > 10) {
+            if (Duration.between(room.getRoomEndTime(), Instant.now()).toSeconds() > 30
+                    || Duration.between(room.getRoomCreationTime(), Instant.now()).toMinutes() > 10) {
                 MDC.put("gameId", entry.getKey());
                 log.info("Removing game");
-                room.finishGame("exit", null);
                 try {
                     gameRepo.deleteById(entry.getKey());
                     return true;

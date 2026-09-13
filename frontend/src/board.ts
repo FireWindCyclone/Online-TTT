@@ -84,10 +84,10 @@ class Board {
 		this.playerType = data.playerType;
 		this.playerTurn = data.playerTurn;
 
-		if (this.playerType === "X") return;
-
-		this.playerTypeDisplay.firstElementChild!.textContent = "You (O)";
-		this.playerTypeDisplay.lastElementChild!.textContent = "Opponent (X)";
+		this.playerTypeDisplay.firstElementChild!.textContent =
+			`You (${data.playerType})`;
+		this.playerTypeDisplay.lastElementChild!.textContent =
+			`Opponent (${data.playerType === "X" ? "O" : "X"})`;
 	}
 
 	connected() {
